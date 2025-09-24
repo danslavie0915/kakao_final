@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카밍 - 스마트 출퇴근 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'kakao-yellow': '#fef01b',
+                        'kakao-bg': '#9bbbd4',
+                        'kakao-text': '#556677',
+                        'kakao-chat-bg': '#b2c7da'
+                    },
+                    fontFamily: {
+                        'kakao': ['Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(to bottom, #b2c7da, #9bbbd4);
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            word-wrap: break-word;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .message-other {
+            background: white;
+            border-radius: 18px 18px 18px 4px;
+        }
+
+        .message-user {
+            background: #fef01b;
+            border-radius: 18px 18px 4px 18px;
+            margin-left: auto;
+        }
+
+        .message-system {
+            background: #f0f8ff;
+            border: 1px solid #e0f0ff;
+            border-radius: 12px;
+            margin: 8px auto;
+            max-width: 90%;
+        }
+
+        .typing-indicator {
+            animation: pulse 1.5s infinite;
+        }
+
+        .route-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            margin: 8px 0;
+            overflow: hidden;
+        }
+
+        .urgent-message {
+            background: #fff5f5;
+            border: 2px solid #fed7d7;
+            animation: urgentPulse 2s infinite;
+        }
+
+        .time-picker {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            margin: 8px 0;
+            padding: 16px;
+            max-width: 280px;
+        }
+
+        .time-display {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            color: #333;
+            margin: 16px 0;
+        }
+
+        .time-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 8px 0;
+        }
+
+        .time-button {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+
+        .time-button:hover {
+            background: #e0e0e0;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @keyframes urgentPulse {
+
+            0%,
+            100% {
+                border-color: #fed7d7;
+            }
+
+            50% {
+                border-color: #fc8181;
+            }
+        }
+
+        .button-action {
+            background: #ffffff;
+            color: #556677;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin: 8px auto;
+            display: block;
+            cursor: pointer;
+            transition: all 0.2s ease-out;
+            font-size: 14px;
+            font-weight: 600;
+            width: fit-content;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .button-action:hover {
+            background: #f9fafb;
+            transform: scale(0.98);
+        }
+
+        .button-primary {
+            background: #fef01b;
+            color: #556677;
+            border: 1px solid #e6d600;
+            box-shadow: 0 4px 12px rgba(254, 240, 27, 0.4);
+        }
+
+        .button-primary:hover {
+            background: #e6d600;
+            box-shadow: 0 6px 16px rgba(254, 240, 27, 0.5);
+        }
+
+        .button-urgent {
+            background: #ff6b6b;
+            color: white;
+            border: 1px solid #ff5252;
+        }
+
+        .button-urgent:hover {
+            background: #ff5252;
+        }
+
+        .time-badge {
+            background: #e8f5e8;
+            color: #2d5a2d;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .notification-sound {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fef01b;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            animation: notificationPop 0.5s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes notificationPop {
+            0% {
+                transform: translateY(-20px) scale(0.8);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* 플로팅 액션 버튼 (FAB) */
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #fef01b 0%, #f9e71e 50%, #f4d03f 100%);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            padding: 14px 20px;
+            box-shadow: 0 6px 20px rgba(254, 240, 27, 0.4), 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            opacity: 0;
+            transform: scale(0);
+            max-width: 220px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .fab.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .fab:hover {
+            background: linear-gradient(135deg, #e6d600 0%, #dcc71a 50%, #d4b836 100%);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(254, 240, 27, 0.5), 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .fab-icon {
+            font-size: 22px;
+            color: #556677;
+            margin-right: 12px;
+            flex-shrink: 0;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .fab-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: #556677;
+            white-space: nowrap;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, #556677 0%, #445566 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @keyframes fabShake {
+
+            0%,
+            100% {
+                transform: translateX(0) scale(1);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-3px) scale(1);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(3px) scale(1);
+            }
+        }
+
+        .fab.shake {
+            animation: fabShake 0.6s ease-in-out;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+    <!-- 알림 사운드 표시 -->
+    <div id="notification-sound" class="notification-sound hidden">
+        🔔 카밍 알림
+    </div>
+
+    <!-- 플로팅 액션 버튼 (FAB) -->
+    <div id="fab" class="fab" onclick="showTimeSimulator()">
+        <span class="fab-icon">⏰</span>
+        <span class="fab-text">새로운 알림 체험</span>
+    </div>
+
+    <!-- 카카오톡 헤더 -->
+    <div class="bg-kakao-yellow shadow-sm">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center">
+            <button onclick="goBack()" class="mr-3 text-gray-700">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                </svg>
+            </button>
+            <div class="flex items-center space-x-3 flex-1">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-lg">🤖</span>
+                </div>
+                <div>
+                    <h1 class="font-semibold text-gray-800">카밍</h1>
+                    <p class="text-xs text-gray-600" id="calming-status">출퇴근 관리 비서</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="showTimeSimulator()"
+                    class="text-gray-700 text-xs bg-white bg-opacity-50 px-2 py-1 rounded">
+                    ⏰ 시간
+                </button>
+                <button class="text-gray-700">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 채팅 영역 -->
+    <div class="max-w-md mx-auto bg-kakao-chat-bg min-h-screen">
+        <div id="chat-container" class="p-4 space-y-3 pb-20">
+            <!-- 메시지들이 여기에 추가됩니다 -->
+        </div>
+
+        <!-- 입력 영역 -->
+        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t p-3">
+            <div class="flex items-center space-x-2">
+                <button class="text-gray-500">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                </button>
+                <input id="message-input" type="text" placeholder="메시지를 입력하세요"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-kakao-yellow"
+                    onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()"
+                    class="bg-kakao-yellow text-gray-800 px-4 py-2 rounded-full font-medium hover:bg-yellow-500 transition-colors">
+                    전송
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 시간 시뮬레이터 모달 -->
+    <div id="time-simulator" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 w-80">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">시간 시뮬레이션</h3>
+            <div class="space-y-3">
+                <button onclick="simulateTime('06:50', 'morning')"
+                    class="w-full bg-blue-100 text-blue-800 py-3 px-4 rounded-xl font-medium hover:bg-blue-200 transition-colors">
+                    🌅 06:50 - 모닝 브리핑
+                </button>
+                <button onclick="simulateTime('08:08', 'departure')"
+                    class="w-full bg-green-100 text-green-800 py-3 px-4 rounded-xl font-medium hover:bg-green-200 transition-colors">
+                    🚀 08:08 - 출발 알림
+                </button>
+                <button onclick="simulateTime('07:45', 'exception')"
+                    class="w-full bg-red-100 text-red-800 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-colors">
+                    🚨 07:45 - 지하철 지연
+                </button>
+                <button onclick="simulateTime('07:30', 'weather')"
+                    class="w-full bg-orange-100 text-orange-800 py-3 px-4 rounded-xl font-medium hover:bg-orange-200 transition-colors">
+                    🌧️ 07:30 - 날씨 긴급상황
+                </button>
+                <button onclick="simulateTime('17:30', 'evening')"
+                    class="w-full bg-purple-100 text-purple-800 py-3 px-4 rounded-xl font-medium hover:bg-purple-200 transition-colors">
+                    🌆 17:30 - 퇴근 알림
+                </button>
+            </div>
+            <button onclick="closeTimeSimulator()"
+                class="w-full mt-4 bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let chatContainer = document.getElementById('chat-container');
+        let messageInput = document.getElementById('message-input');
+        let currentStep = 0;
+        let isOnboarded = false;
+        let userProfile = {
+            name: '',
+            homeAddress: '',
+            workAddress: '',
+            arrivalTime: { hour: 9, minute: 0, period: 'AM' },
+            allowTracking: false
+        };
+
+        // FAB 제어 변수
+        let fabShowTimeout;
+        let fabShakeTimeout;
+
+        // 알림 사운드 표시
+        function showNotificationSound() {
+            const soundDiv = document.getElementById('notification-sound');
+            soundDiv.classList.remove('hidden');
+            setTimeout(() => {
+                soundDiv.classList.add('hidden');
+            }, 2000);
+        }
+
+        // FAB 표시/숨김 제어
+        function showFAB() {
+            const fab = document.getElementById('fab');
+            fab.classList.add('show');
+        }
+
+        function hideFAB() {
+            const fab = document.getElementById('fab');
+            fab.classList.remove('show');
+        }
+
+        // FAB 흔들기 애니메이션
+        function shakeFAB() {
+            const fab = document.getElementById('fab');
+            fab.classList.add('shake');
+            setTimeout(() => {
+                fab.classList.remove('shake');
+            }, 600);
+        }
+
+        // 알림 완료 후 FAB 표시 및 흔들기
+        function showFABAfterNotification() {
+            // 3초 후 FAB 표시
+            fabShowTimeout = setTimeout(() => {
+                showFAB();
+                // 1초 후 흔들기
+                fabShakeTimeout = setTimeout(() => {
+                    shakeFAB();
+                    // 5초마다 흔들기 반복 (3번)
+                    let shakeCount = 0;
+                    const shakeInterval = setInterval(() => {
+                        shakeCount++;
+                        if (shakeCount < 3) {
+                            shakeFAB();
+                        } else {
+                            clearInterval(shakeInterval);
+                        }
+                    }, 5000);
+                }, 1000);
+            }, 1000);
+        }
+
+        // 메시지 추가 함수
+        function addMessage(content, isUser = false, hasButtons = false, buttons = [], isUrgent = false, isSystem = false) {
+            const messageDiv = document.createElement('div');
+            let className = `message-bubble p-3 mb-2`;
+
+            if (isSystem) {
+                className += ' message-system';
+            } else if (isUser) {
+                className += ' message-user ml-auto';
+            } else {
+                className += ` message-other ${isUrgent ? 'urgent-message' : ''}`;
+            }
+
+            messageDiv.className = className;
+
+            let messageHTML = `<p class="text-sm ${isSystem ? 'text-blue-800 text-center' : 'text-gray-800'}">${content}</p>`;
+
+            if (hasButtons && buttons.length > 0) {
+                messageHTML += '<div class="mt-4 flex flex-col items-center space-y-2">';
+                buttons.forEach(button => {
+                    let buttonClass = 'button-action';
+                    if (button.urgent) buttonClass = 'button-action button-urgent';
+                    else if (button.primary) buttonClass = 'button-action button-primary';
+
+                    messageHTML += `<button onclick="${button.action}" class="${buttonClass}">${button.text}</button>`;
+                });
+                messageHTML += '</div>';
+            }
+
+            messageDiv.innerHTML = messageHTML;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // 시간 선택기 추가
+        function addTimePicker() {
+            const timePickerDiv = document.createElement('div');
+            timePickerDiv.className = 'time-picker';
+            timePickerDiv.id = 'time-picker';
+
+            const timeDisplay = formatTime(userProfile.arrivalTime);
+
+            timePickerDiv.innerHTML = `
+                <h4 class="font-semibold text-gray-800 mb-3 text-center">회사 도착 희망 시간</h4>
+                <div class="time-display" id="time-display">${timeDisplay}</div>
+                
+                <div class="time-controls">
+                    <span class="text-sm text-gray-600">시간</span>
+                    <div class="flex items-center space-x-2">
+                        <button class="time-button" onclick="adjustTime('hour', -1)">−</button>
+                        <span class="w-8 text-center font-semibold" id="hour-display">${userProfile.arrivalTime.hour}</span>
+                        <button class="time-button" onclick="adjustTime('hour', 1)">+</button>
+                    </div>
+                </div>
+                
+                <div class="time-controls">
+                    <span class="text-sm text-gray-600">분</span>
+                    <div class="flex items-center space-x-2">
+                        <button class="time-button" onclick="adjustTime('minute', -15)">−</button>
+                        <span class="w-8 text-center font-semibold" id="minute-display">${userProfile.arrivalTime.minute.toString().padStart(2, '0')}</span>
+                        <button class="time-button" onclick="adjustTime('minute', 15)">+</button>
+                    </div>
+                </div>
+                
+                <div class="time-controls">
+                    <span class="text-sm text-gray-600">오전/오후</span>
+                    <div class="flex items-center space-x-2">
+                        <button class="time-button" onclick="togglePeriod()" style="width: auto; padding: 8px 16px; border-radius: 20px;">
+                            <span id="period-display">${userProfile.arrivalTime.period}</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button onclick="confirmArrivalTime()" class="w-full mt-4 bg-kakao-yellow text-gray-800 py-2 px-4 rounded-xl font-medium hover:bg-yellow-500 transition-colors">
+                    ✅ 시간 확정
+                </button>
+            `;
+
+            chatContainer.appendChild(timePickerDiv);
+            scrollToBottom();
+        }
+
+        // 시간 포맷팅
+        function formatTime(timeObj) {
+            const hour = timeObj.hour;
+            const minute = timeObj.minute.toString().padStart(2, '0');
+            const period = timeObj.period;
+            return `${hour}:${minute} ${period}`;
+        }
+
+        // 시간 조정
+        function adjustTime(type, delta) {
+            if (type === 'hour') {
+                userProfile.arrivalTime.hour += delta;
+                if (userProfile.arrivalTime.hour > 12) userProfile.arrivalTime.hour = 1;
+                if (userProfile.arrivalTime.hour < 1) userProfile.arrivalTime.hour = 12;
+            } else if (type === 'minute') {
+                userProfile.arrivalTime.minute += delta;
+                if (userProfile.arrivalTime.minute >= 60) userProfile.arrivalTime.minute = 0;
+                if (userProfile.arrivalTime.minute < 0) userProfile.arrivalTime.minute = 45;
+            }
+
+            updateTimeDisplay();
+        }
+
+        // 오전/오후 토글
+        function togglePeriod() {
+            userProfile.arrivalTime.period = userProfile.arrivalTime.period === 'AM' ? 'PM' : 'AM';
+            updateTimeDisplay();
+        }
+
+        // 시간 표시 업데이트
+        function updateTimeDisplay() {
+            document.getElementById('time-display').textContent = formatTime(userProfile.arrivalTime);
+            document.getElementById('hour-display').textContent = userProfile.arrivalTime.hour;
+            document.getElementById('minute-display').textContent = userProfile.arrivalTime.minute.toString().padStart(2, '0');
+            document.getElementById('period-display').textContent = userProfile.arrivalTime.period;
+        }
+
+        // 도착 시간 확정
+        function confirmArrivalTime() {
+            const timeString = formatTime(userProfile.arrivalTime);
+            addMessage(`도착 희망 시간: ${timeString}`, true);
+
+            // 시간 선택기 제거
+            const timePicker = document.getElementById('time-picker');
+            if (timePicker) timePicker.remove();
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('완벽해요! 마지막으로 더 정확한 추천을 위해 이동 패턴 학습에 동의해주시겠어요?', false, true, [
+                        { text: '📋 자세한 내용 보기', action: 'showPrivacyDetails()', primary: false },
+                        { text: '네, 동의해요', action: 'allowTracking(true)', primary: false },
+                        { text: '아니요, 괜찮아요', action: 'allowTracking(false)', primary: false }
+                    ]);
+                }, 1500);
+            }, 500);
+        }
+
+        // 경로 카드 추가
+        function addRouteCard(routes, title = "추천 경로") {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'route-card p-4 mb-2 max-w-xs';
+
+            let cardHTML = `<h4 class="font-semibold text-gray-800 mb-3">${title}</h4>`;
+
+            routes.forEach((route, index) => {
+                const statusColor = route.status === '원활' ? 'text-green-600' :
+                    route.status === '지연' ? 'text-red-600' : 'text-orange-600';
+
+                cardHTML += `
+                    <div class="flex items-center justify-between p-3 ${index > 0 ? 'border-t border-gray-100' : ''} ${route.recommended ? 'bg-yellow-50 rounded-lg' : ''}">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8 ${route.color} rounded-full flex items-center justify-center">
+                                <span class="text-white text-xs font-bold">${route.icon}</span>
+                            </div>
+                            <div>
+                                <p class="font-medium text-gray-800 text-sm">${route.name}</p>
+                                <p class="text-xs text-gray-600">${route.description}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm font-semibold text-gray-800">${route.time}</div>
+                            <div class="text-xs ${statusColor}">${route.status}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            cardHTML += `
+                <button onclick="startNavigation()" class="w-full mt-3 bg-kakao-yellow text-gray-800 py-2 px-4 rounded-xl font-medium hover:bg-yellow-500 transition-colors">
+                    🗺️ 경로 안내 시작
+                </button>
+            `;
+
+            cardDiv.innerHTML = cardHTML;
+            chatContainer.appendChild(cardDiv);
+            scrollToBottom();
+        }
+
+        // 타이핑 인디케이터
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'message-bubble message-other p-3 mb-2 typing-indicator';
+            typingDiv.innerHTML = '<p class="text-sm text-gray-600">카밍이 입력 중...</p>';
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+
+        // 스크롤 하단으로
+        function scrollToBottom() {
+            setTimeout(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            }, 100);
+        }
+
+        // 키 입력 처리
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 메시지 전송
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            messageInput.value = '';
+
+            setTimeout(() => {
+                handleCalmingResponse(message);
+            }, 1000);
+        }
+
+        // 카밍 응답 처리
+        function handleCalmingResponse(userMessage) {
+            showTyping();
+
+            setTimeout(() => {
+                hideTyping();
+
+                if (!isOnboarded && (userMessage.includes('출퇴근') || userMessage.includes('카밍') || userMessage.includes('시작'))) {
+                    startOnboarding();
+                } else if (isOnboarded) {
+                    handleOnboardedResponse(userMessage);
+                } else {
+                    addMessage('안녕하세요! 출퇴근 관리가 필요하시면 아래 버튼을 눌러주세요! 😊', false, true, [
+                        { text: '🚀 시작하기', action: 'startOnboarding()', primary: true }
+                    ]);
+                }
+            }, 2000);
+        }
+
+        // 온보딩 완료 후 응답
+        function handleOnboardedResponse(message) {
+            if (message.includes('알림') || message.includes('브리핑')) {
+                addMessage('어떤 알림을 확인해보시겠어요?', false, true, [
+                    { text: '🌅 모닝 브리핑', action: 'sendMorningBriefing()', primary: false },
+                    { text: '🚀 출발 알림', action: 'sendDepartureAlert()', primary: false },
+                    { text: '🚨 긴급 알림', action: 'sendExceptionAlert()', primary: false }
+                ]);
+            } else if (message.includes('경로') || message.includes('길')) {
+                addMessage('현재 교통 상황을 확인해드릴게요!', false);
+                setTimeout(() => {
+                    const routes = [
+                        {
+                            name: '2호선 + 도보',
+                            description: '강남역 → 회사',
+                            time: '42분',
+                            status: '원활',
+                            color: 'bg-blue-500',
+                            icon: '2',
+                            recommended: true
+                        },
+                        {
+                            name: '740번 버스',
+                            description: '직행',
+                            time: '48분',
+                            status: '보통',
+                            color: 'bg-green-500',
+                            icon: '🚌'
+                        }
+                    ];
+                    addRouteCard(routes);
+                }, 1000);
+            } else {
+                addMessage('무엇을 도와드릴까요? 😊', false, true, [
+                    { text: '📍 현재 경로 확인', action: 'checkCurrentRoute()', primary: false },
+                    { text: '⏰ 알림 설정', action: 'showNotificationSettings()', primary: false },
+                    { text: '🗺️ 카카오맵 열기', action: 'openKakaoMap()', primary: false }
+                ]);
+            }
+        }
+
+        // 온보딩 시작
+        function startOnboarding() {
+            addMessage(`안녕하세요! 매일 아침 출근길을 챙겨드리는 비서, 카밍이에요. 😊<br><br>먼저 출퇴근 프로필을 만들어볼까요?<br><br>집 주소를 알려주시겠어요?`, false, true, [
+                { text: '🏠 주소 검색', action: 'searchHomeAddress()', primary: false }
+            ]);
+        }
+
+        // 주소 검색 (간단한 버전)
+        function searchHomeAddress() {
+            const addresses = [
+                '서울시 강남구 테헤란로 123',
+                '서울시 서초구 서초대로 456',
+                '서울시 송파구 올림픽로 789',
+                '서울시 마포구 월드컵북로 321'
+            ];
+
+            const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
+            userProfile.homeAddress = randomAddress;
+
+            setTimeout(() => {
+                addMessage(`집 주소: ${randomAddress}`, true);
+
+                setTimeout(() => {
+                    showTyping();
+                    setTimeout(() => {
+                        hideTyping();
+                        addMessage('좋아요! 이제 회사 주소도 알려주세요.', false, true, [
+                            { text: '🏢 주소 검색', action: 'searchWorkAddress()', primary: false }
+                        ]);
+                    }, 1500);
+                }, 500);
+            }, 1000);
+        }
+
+        function searchWorkAddress() {
+            const addresses = [
+                '서울시 강남구 역삼로 456',
+                '서울시 서초구 강남대로 789',
+                '서울시 중구 세종대로 123'
+            ];
+
+            const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
+            userProfile.workAddress = randomAddress;
+
+            setTimeout(() => {
+                addMessage(`회사 주소: ${randomAddress}`, true);
+
+                setTimeout(() => {
+                    showTyping();
+                    setTimeout(() => {
+                        hideTyping();
+                        addMessage('완벽해요! 마지막으로 회사 도착 희망 시간을 설정해주세요.');
+
+                        setTimeout(() => {
+                            addTimePicker();
+                        }, 1000);
+                    }, 1500);
+                }, 500);
+            }, 1000);
+        }
+
+        // 개인정보 상세 설명
+        function showPrivacyDetails() {
+            addMessage('자세한 내용을 알려주세요', true);
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('🔒 개인정보 처리 방침<br><br><strong>수집하는 정보:</strong><br>• 출발/도착 시간 기록<br>• 이용 교통수단 (지하철/버스/도보)<br>• 경로 선택 패턴<br><br><strong>사용 목적:</strong><br>• 개인 맞춤 출발 시간 추천<br>• 교통 상황 예측 정확도 향상<br>• 날씨별 이동 패턴 분석<br><br><strong>보관 및 보호:</strong><br>• 최근 30일간만 보관<br>• 암호화하여 안전하게 저장<br>• 외부 제공 절대 금지<br>• 언제든 삭제 요청 가능', false, true, [
+                        { text: '동의하고 시작하기', action: 'allowTracking(true)', primary: false },
+                        { text: '학습 없이 사용하기', action: 'allowTracking(false)', primary: false }
+                    ]);
+                }, 2500);
+            }, 500);
+        }
+
+        // 패턴 학습 동의 (개인정보 설명 포함)
+        function allowTracking(allow) {
+            userProfile.allowTracking = allow;
+            addMessage(allow ? '동의하고 시작하기' : '학습 없이 사용하기', true);
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+
+                    if (allow) {
+                        addMessage('🔒 개인정보 보호 안내<br><br>• 수집 정보: 출발/도착 시간, 이용 교통수단<br>• 보관 기간: 최근 30일간<br>• 사용 목적: 개인 맞춤 경로 추천<br>• 외부 제공: 절대 하지 않음<br><br>언제든 설정에서 학습을 중단할 수 있어요.', false, false, [], false, true);
+
+                        setTimeout(() => {
+                            completeOnboarding();
+                        }, 3000);
+                    } else {
+                        completeOnboarding();
+                    }
+                }, 2000);
+            }, 500);
+        }
+
+        // 온보딩 완료
+        function completeOnboarding() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                isOnboarded = true;
+                addMessage('✅ 멋진 출퇴근 프로필이 완성되었어요!<br><br>이제부터 제가 매일 아침 챙겨드릴게요.<br><br>상단의 ⏰ 시간 버튼을 눌러서 다양한 시간대의 알림을 체험해보세요!', false, true, [
+                    { text: '⏰ 알림 체험하기', action: 'showTimeSimulator()', primary: false },
+                    { text: '🗺️ 카카오맵 열기', action: 'openKakaoMap()', primary: false }
+                ]);
+
+                // 상태 업데이트
+                document.getElementById('calming-status').textContent = '활성화됨 • 출퇴근 관리 중';
+            }, 1500);
+        }
+
+        // 시간 시뮬레이터 표시
+        function showTimeSimulator() {
+            document.getElementById('time-simulator').classList.remove('hidden');
+            // FAB 숨기기
+            hideFAB();
+            // 기존 타이머 클리어
+            if (fabShowTimeout) clearTimeout(fabShowTimeout);
+            if (fabShakeTimeout) clearTimeout(fabShakeTimeout);
+        }
+
+        function closeTimeSimulator() {
+            document.getElementById('time-simulator').classList.add('hidden');
+        }
+
+        // 시간별 알림 시뮬레이션
+        function simulateTime(time, type) {
+            closeTimeSimulator();
+            showNotificationSound();
+
+            addMessage(`⏰ 시간: ${time}`, false, false, [], false, true);
+
+            setTimeout(() => {
+                if (type === 'morning') {
+                    sendMorningBriefing();
+                } else if (type === 'departure') {
+                    sendDepartureAlert();
+                } else if (type === 'exception') {
+                    sendExceptionAlert();
+                } else if (type === 'weather') {
+                    sendWeatherAlert();
+                } else if (type === 'evening') {
+                    sendEveningAlert();
+                }
+            }, 1000);
+        }
+
+        // 모닝 브리핑
+        function sendMorningBriefing() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                const timeString = formatTime(userProfile.arrivalTime);
+                addMessage(`☀️ 좋은 아침!<br><br>오늘 출근길은 대체로 맑고, 교통도 원활해요.<br><br>회사까지 약 45분 예상됩니다.<br><br>${timeString} 정시 도착을 위해 08:15에 출발하시는 걸 추천해요!`);
+
+                setTimeout(() => {
+                    const routes = [
+                        {
+                            name: '2호선 + 도보',
+                            description: '강남역 → 회사',
+                            time: '45분',
+                            status: '원활',
+                            color: 'bg-blue-500',
+                            icon: '2',
+                            recommended: true
+                        }
+                    ];
+                    addRouteCard(routes, "오늘의 추천 경로");
+
+                    // 알림 완료 후 FAB 표시
+                    showFABAfterNotification();
+                }, 1000);
+            }, 2000);
+        }
+
+        // 출발 알림
+        function sendDepartureAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🚀 지금 바로 출발하세요!<br><br>오늘도 힘내세요!', false, false, [], false);
+
+                setTimeout(() => {
+                    const routes = [
+                        {
+                            name: '2호선 + 도보',
+                            description: '강남역 → 회사',
+                            time: '42분',
+                            status: '원활',
+                            color: 'bg-blue-500',
+                            icon: '2',
+                            recommended: true
+                        }
+                    ];
+                    addRouteCard(routes, "지금 출발 경로");
+
+                    // 알림 완료 후 FAB 표시
+                    showFABAfterNotification();
+                }, 1000);
+            }, 1500);
+        }
+
+        // 예외 상황 알림
+        function sendExceptionAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🚨 <strong>긴급 상황!</strong><br><br>2호선에 신호 장애가 발생했어요. 15분 지연이 예상됩니다.<br><br>대안 경로를 추천해드릴게요!', false, false, [], true);
+
+                setTimeout(() => {
+                    addMessage('🔄 대안 경로 안내<br><br>• 3호선 환승 경로: 35분<br>• 버스 740번: 40분<br>• 택시 이용: 25분 (8,000원)', false, true, [
+                        { text: '🚇 지하철 경로로 변경', action: 'useAlternativeRoute()', primary: false },
+                        { text: '🌂 우산 챙기기 알림', action: 'setUmbrellaReminder()', primary: false }
+                    ]);
+
+                    // 알림 완료 후 FAB 표시
+                    showFABAfterNotification();
+                }, 2000);
+            }, 1500);
+        }
+
+        // 날씨 알림
+        function sendWeatherAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🌧️ <strong>날씨 알림!</strong><br><br>30분 뒤부터 비가 올 예정이에요.<br><br>우산을 챙기시고 평소보다 5분 일찍 출발하세요!', false, false, [], false);
+
+                setTimeout(() => {
+                    addMessage('☔ 비 대비 추천<br><br>• 우산 챙기기<br>• 5분 일찍 출발<br>• 지하 통로 이용', false, true, [
+                        { text: '🌂 우산 챙기기 알림', action: 'setUmbrellaReminder()', primary: false },
+                        { text: '⏰ 일찍 출발 설정', action: 'setEarlyDeparture()', primary: false }
+                    ]);
+
+                    // 알림 완료 후 FAB 표시
+                    showFABAfterNotification();
+                }, 2000);
+            }, 1500);
+        }
+
+        // 퇴근 알림
+        function sendEveningAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🌆 퇴근 시간이에요!<br><br>오늘 하루 수고하셨어요.<br><br>집까지 약 40분 예상됩니다.', false, false, [], false);
+
+                setTimeout(() => {
+                    const routes = [
+                        {
+                            name: '2호선 + 도보',
+                            description: '회사 → 집',
+                            time: '40분',
+                            status: '약간 혼잡',
+                            color: 'bg-blue-500',
+                            icon: '2',
+                            recommended: true
+                        }
+                    ];
+                    addRouteCard(routes, "퇴근 경로");
+
+                    // 알림 완료 후 FAB 표시
+                    showFABAfterNotification();
+                }, 1000);
+            }, 1500);
+        }
+
+        // 카카오맵 열기
+        function openKakaoMap() {
+            window.open('https://map.kakao.com/', '_blank');
+        }
+
+        function startNavigation() {
+            openKakaoMap();
+        }
+
+        // 기타 함수들
+        function useAlternativeRoute() {
+            addMessage('대안 경로로 변경했습니다', true);
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('✅ 3호선 환승 경로로 안내를 시작합니다!<br><br>예상 소요 시간: 35분');
+            }, 1000);
+        }
+
+        function setUmbrellaReminder() {
+            addMessage('우산 챙기기 알림 설정', true);
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🌂 우산 챙기기 알림이 설정되었어요!<br><br>출발 5분 전에 다시 알려드릴게요.');
+            }, 1000);
+        }
+
+        function setEarlyDeparture() {
+            addMessage('일찍 출발 설정', true);
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('⏰ 5분 일찍 출발하도록 설정되었어요!<br><br>새로운 출발 시간: 08:10');
+            }, 1000);
+        }
+
+        function checkCurrentRoute() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('현재 경로를 확인해드릴게요!', false);
+                setTimeout(() => {
+                    const routes = [
+                        {
+                            name: '2호선 + 도보',
+                            description: '강남역 → 회사',
+                            time: '42분',
+                            status: '원활',
+                            color: 'bg-blue-500',
+                            icon: '2',
+                            recommended: true
+                        }
+                    ];
+                    addRouteCard(routes);
+                }, 1000);
+            }, 1000);
+        }
+
+        function showNotificationSettings() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('알림 설정을 확인해보세요!', false, true, [
+                    { text: '🌅 모닝 브리핑 ON/OFF', action: 'toggleMorningBriefing()', primary: false },
+                    { text: '🚀 출발 알림 ON/OFF', action: 'toggleDepartureAlert()', primary: false },
+                    { text: '🌧️ 날씨 알림 ON/OFF', action: 'toggleWeatherAlert()', primary: false }
+                ]);
+            }, 1000);
+        }
+
+        function toggleMorningBriefing() {
+            addMessage('모닝 브리핑 설정 변경', true);
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('✅ 모닝 브리핑이 활성화되었어요!<br><br>매일 아침 6:50에 알려드릴게요.');
+            }, 1000);
+        }
+
+        function toggleDepartureAlert() {
+            addMessage('출발 알림 설정 변경', true);
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('✅ 출발 알림이 활성화되었어요!<br><br>출발 시간에 맞춰 알려드릴게요.');
+            }, 1000);
+        }
+
+        function toggleWeatherAlert() {
+            addMessage('날씨 알림 설정 변경', true);
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('✅ 날씨 알림이 활성화되었어요!<br><br>비나 눈이 올 때 미리 알려드릴게요.');
+            }, 1000);
+        }
+
+        function goBack() {
+            window.location.href = 'new_final_integrated.html';
+        }
+
+        // 초기 메시지
+        setTimeout(() => {
+            addMessage('안녕하세요! 스마트 출퇴근 관리 서비스에 오신 걸 환영해요! 😊<br><br>아래 버튼을 눌러서 시작해보세요!', false, true, [
+                { text: '🚀 시작하기', action: 'startOnboarding()', primary: true }
+            ]);
+        }, 1000);
+    </script>
+</body>
+
+</html>
