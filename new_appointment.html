@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>카밍 - 스마트 모임 비서</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'k-route': {
+                            'chat-bg': '#9bbbd4',
+                            'other-msg': '#ffffff',
+                            'my-msg': '#fef01b',
+                            'text-gray': '#556677',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .message-bubble {
+            border-radius: 12px;
+            padding: 12px 16px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .message-bubble--other {
+            background-color: #ffffff;
+            color: #556677;
+            border-bottom-left-radius: 4px;
+        }
+        .message-bubble--mine {
+            background-color: #fef01b;
+            color: #556677;
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+        }
+        .btn-kakao {
+            background-color: #fef01b;
+            color: #556677;
+            font-weight: 600;
+            padding: 12px 20px;
+            border-radius: 12px;
+            transition: all 0.2s ease-out;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-kakao:hover {
+            box-shadow: 0 4px 12px rgba(254, 240, 27, 0.4);
+            transform: scale(0.98);
+        }
+        .btn-kakao--secondary {
+            background-color: #ffffff;
+            color: #556677;
+            border: 1px solid #d1d5db;
+        }
+        .btn-kakao--secondary:hover {
+            background-color: #f9fafb;
+        }
+        .card-kakao {
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        }
+        .card-kakao--hub {
+            border-left: 4px solid #fef01b;
+        }
+        .tag-kakao {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            font-size: 14px;
+            background-color: #f3f4f6;
+            color: #556677;
+            margin: 2px;
+        }
+        .tag-kakao--selected {
+            background-color: #fef01b;
+            color: #556677;
+        }
+        .tag-kakao--clickable {
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tag-kakao--clickable:hover {
+            background-color: #e5e7eb;
+        }
+        .tag-kakao--clickable.tag-kakao--selected:hover {
+            background-color: #fde047;
+        }
+        .input-kakao {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #ffffff;
+            border-radius: 12px;
+            border: 1px solid #d1d5db;
+            transition: all 0.2s;
+        }
+        .input-kakao:focus {
+            outline: none;
+            border-color: #fef01b;
+            box-shadow: 0 0 0 3px rgba(254, 240, 27, 0.1);
+        }
+        .progress-bar {
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #fef01b;
+            transition: width 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .transport-option {
+            padding: 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 8px;
+        }
+        .transport-option:hover {
+            border-color: #d1d5db;
+        }
+        .transport-option.selected {
+            border-color: #fef01b;
+            background-color: #fffbeb;
+        }
+    </style>
+</head>
+<body style="background-color: #9bbbd4; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;">
+    <div class="min-h-screen flex flex-col max-w-md mx-auto" id="main-container" style="background-color: #9bbbd4;">
+        <!-- Header -->
+        <div class="bg-yellow-300 shadow-sm" id="header-container" style="background-color: #fef01b;">
+            <div class="px-4 py-3 flex items-center">
+                <button onclick="goBack()" class="mr-3 text-gray-700">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                    </svg>
+                </button>
+                <div class="flex items-center space-x-3 flex-1">
+                    <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                        <span class="text-white text-lg">🤖</span>
+                    </div>
+                    <div>
+                        <h1 class="font-semibold text-gray-800">카밍</h1>
+                        <p class="text-xs text-gray-600" id="calming-status">모임 관리 비서</p>
+                    </div>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="text-gray-700">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <!-- Progress Bar -->
+            <div class="progress-bar mx-4 mb-3">
+                <div class="progress-fill" id="progress-fill" style="width: 10%;"></div>
+            </div>
+            <div class="text-xs text-center mb-2" style="color: #556677;" id="progress-text">
+                1/7 단계: 채팅에서 약속 제안
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-4" id="content-area">
+            
+            <!-- Step 1: 채팅에서 약속 제안 -->
+            <div id="step-1" class="fade-in">
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-start space-x-2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">김</div>
+                        <div>
+                            <div class="text-xs mb-1" style="color: #556677;">김철수</div>
+                            <div class="message-bubble message-bubble--other">오늘 저녁에 만날까요?</div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end">
+                        <div class="message-bubble message-bubble--mine">좋아요! 어디서 만날까요?</div>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">이</div>
+                        <div>
+                            <div class="text-xs mb-1" style="color: #556677;">이영희</div>
+                            <div class="message-bubble message-bubble--other">저도 참여할게요!</div>
+                        </div>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">K</div>
+                        <div>
+                            <div class="text-xs mb-1" style="color: #556677;">카밍</div>
+                            <div class="message-bubble message-bubble--other">
+                                약속 허브를 만들어 드릴까요? 🎯<br>
+                                참여자들의 선호도를 수집해서 최적의 장소를 추천해드립니다!
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button class="btn-kakao" onclick="nextStep()">
+                        🚀 약속 허브 만들기
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 2: 기본 정보 입력 -->
+            <div id="step-2" class="fade-in hidden">
+                <h2 class="text-lg font-semibold mb-4" style="color: #556677;">📝 기본 정보 입력</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: #556677;">약속 제목</label>
+                        <input type="text" class="input-kakao" placeholder="예: 저녁 식사" value="저녁 식사">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: #556677;">날짜 후보 (복수 선택)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="tag-kakao tag-kakao--clickable tag-kakao--selected" onclick="toggleTag(this)">
+                                📅 1월 15일 (월)
+                            </div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">
+                                📅 1월 16일 (화)
+                            </div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">
+                                📅 1월 17일 (수)
+                            </div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">
+                                📅 1월 18일 (목)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: #556677;">약속 목적</label>
+                        <div class="flex flex-wrap gap-2">
+                            <div class="tag-kakao tag-kakao--clickable tag-kakao--selected" onclick="toggleTag(this)">🍽️ 식사</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">☕ 카페</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">🍺 술자리</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">🎬 영화</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">🎮 오락</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-6">
+                    <button class="btn-kakao" onclick="nextStep()">
+                        ✅ 다음 단계
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 3: 개인 선호도 입력 -->
+            <div id="step-3" class="fade-in hidden">
+                <h2 class="text-lg font-semibold mb-4" style="color: #556677;">🎯 개인 선호도 입력</h2>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: #556677;">출발지</label>
+                        <div class="relative">
+                            <input type="text" class="input-kakao pr-12" placeholder="출발지를 입력하세요" value="집">
+                            <button class="absolute right-3 top-1/2 transform -translate-y-1/2 text-lg">📍</button>
+                        </div>
+                        <div class="mt-2 space-y-1">
+                            <div class="tag-kakao tag-kakao--clickable" onclick="selectLocation(this, '집')">🏠 집</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="selectLocation(this, '회사')">🏢 회사</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="selectLocation(this, '강남역')">🚇 강남역</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: #556677;">선호 교통수단 (복수 선택)</label>
+                        <div class="space-y-2">
+                            <div class="transport-option selected" onclick="toggleTransport(this)">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xl">🚇</span>
+                                        <div>
+                                            <div class="font-medium" style="color: #556677;">대중교통</div>
+                                            <div class="text-sm text-gray-600">지하철, 버스 이용</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-gray-500">⏱️ 15분 💰 1,500원</div>
+                                </div>
+                            </div>
+                            <div class="transport-option" onclick="toggleTransport(this)">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xl">🚗</span>
+                                        <div>
+                                            <div class="font-medium" style="color: #556677;">자가용</div>
+                                            <div class="text-sm text-gray-600">개인 차량 이용</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-gray-500">⏱️ 12분 💰 3,000원</div>
+                                </div>
+                            </div>
+                            <div class="transport-option" onclick="toggleTransport(this)">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <span class="text-xl">🚕</span>
+                                        <div>
+                                            <div class="font-medium" style="color: #556677;">택시</div>
+                                            <div class="text-sm text-gray-600">택시 호출</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-xs text-gray-500">⏱️ 10분 💰 8,000원</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: #556677;">예산 범위</label>
+                        <div class="flex flex-wrap gap-2">
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">💰 1-2만원</div>
+                            <div class="tag-kakao tag-kakao--clickable tag-kakao--selected" onclick="toggleTag(this)">💰 2-3만원</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">💰 3-5만원</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">💰 5만원+</div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium mb-2" style="color: #556677;">선호 음식</label>
+                        <div class="flex flex-wrap gap-2">
+                            <div class="tag-kakao tag-kakao--clickable tag-kakao--selected" onclick="toggleTag(this)">🍚 한식</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">🍝 양식</div>
+                            <div class="tag-kakao tag-kakao--clickable tag-kakao--selected" onclick="toggleTag(this)">🍜 일식</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">🥘 중식</div>
+                            <div class="tag-kakao tag-kakao--clickable" onclick="toggleTag(this)">🌮 기타</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-6">
+                    <button class="btn-kakao" onclick="nextStep()">
+                        📤 선호도 제출
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 4: 선호도 수집 현황 -->
+            <div id="step-4" class="fade-in hidden">
+                <h2 class="text-lg font-semibold mb-4" style="color: #556677;">📊 선호도 수집 현황</h2>
+                
+                <div class="card-kakao mb-4">
+                    <h3 class="font-semibold mb-3" style="color: #556677;">참여자 현황</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">김</div>
+                                <span>김철수 (방장)</span>
+                            </div>
+                            <span class="tag-kakao--selected text-xs">✅ 완료</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">이</div>
+                                <span>이영희</span>
+                            </div>
+                            <span class="tag-kakao--selected text-xs">✅ 완료</span>
+                        </div>
+                        <div class="flex items-center justify-between" id="minsu-status">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">박</div>
+                                <span>박민수</span>
+                            </div>
+                            <span class="tag-kakao--selected text-xs">✅ 완료</span>
+                        </div>
+                        <div class="flex items-center justify-between" id="jiyoung-status">
+                            <div class="flex items-center space-x-2">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">최</div>
+                                <span>최지영</span>
+                            </div>
+                            <span class="tag-kakao--selected text-xs">✅ 완료</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-4">
+                    <div class="text-sm text-gray-600 mb-2">수집 진행률</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="collection-progress" style="width: 100%;"></div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1" id="collection-status">4/4 명 완료</div>
+                </div>
+
+                <div class="text-center">
+                    <button class="btn-kakao" onclick="nextStep()">
+                        ✅ 다음 단계
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 5: AI 추천 결과 -->
+            <div id="step-5" class="fade-in hidden">
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-start space-x-2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">K</div>
+                        <div>
+                            <div class="text-xs mb-1" style="color: #556677;">카밍</div>
+                            <div class="message-bubble message-bubble--other">
+                                🤖 분석이 완료되었어요!<br>
+                                4명의 선호도를 종합해서 최적의 장소 3곳을 추천드릴게요 ✨
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-4 p-3 bg-blue-50 rounded-lg">
+                    <div class="text-sm text-blue-800 font-medium">🎯 분석 완료!</div>
+                    <div class="text-xs text-blue-600 mt-1">
+                        4명의 선호도를 분석하여 최적의 장소 3곳을 추천합니다
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- 1위 추천 -->
+                    <div class="card-kakao border-2 border-yellow-300">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold text-lg" style="color: #556677;">🥇 맛있는 한식당</h3>
+                            <div class="bg-green-100 text-green-600 px-2 py-1 rounded-full text-xs font-medium">
+                                92점
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">서울시 강남구 강남대로 123</p>
+                        <div class="flex items-center space-x-1 mb-3">
+                            <span class="text-yellow-400">★★★★☆</span>
+                            <span class="text-sm text-gray-600">(128)</span>
+                        </div>
+                        <div class="text-sm mb-3">
+                            <span class="text-gray-600">가격대: </span>
+                            <span class="font-medium" style="color: #556677;">20,000원 - 30,000원</span>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mb-3">
+                            <span class="tag-kakao--selected text-xs">주차 ✓</span>
+                            <span class="tag-kakao--selected text-xs">WiFi ✓</span>
+                            <span class="tag-kakao--selected text-xs">개별실 ✓</span>
+                        </div>
+                        <div class="bg-blue-50 p-2 rounded text-xs text-blue-700 mb-3">
+                            <div class="font-medium mb-1">🎯 추천 이유</div>
+                            <ul class="space-y-1">
+                                <li>• 모든 참여자의 예산 범위에 적합</li>
+                                <li>• 평균 이동시간 18분으로 최적</li>
+                                <li>• 한식 선호도 높음 (3/4명)</li>
+                            </ul>
+                        </div>
+                        <div class="grid grid-cols-4 gap-2 text-xs text-center">
+                            <div>
+                                <div class="text-gray-600">예산</div>
+                                <div class="font-medium">95%</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">음식</div>
+                                <div class="font-medium">90%</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">위치</div>
+                                <div class="font-medium">88%</div>
+                            </div>
+                            <div>
+                                <div class="text-gray-600">특징</div>
+                                <div class="font-medium">95%</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2위 추천 -->
+                    <div class="card-kakao">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold" style="color: #556677;">🥈 도쿄 라멘</h3>
+                            <div class="bg-yellow-100 text-yellow-600 px-2 py-1 rounded-full text-xs font-medium">
+                                85점
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">서울시 강남구 테헤란로 456</p>
+                        <div class="text-sm mb-2">
+                            <span class="text-gray-600">가격대: </span>
+                            <span class="font-medium" style="color: #556677;">15,000원 - 25,000원</span>
+                        </div>
+                        <div class="text-xs text-gray-600">일식 선호도 매칭, 접근성 우수</div>
+                    </div>
+
+                    <!-- 3위 추천 -->
+                    <div class="card-kakao">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold" style="color: #556677;">🥉 이탈리안 키친</h3>
+                            <div class="bg-orange-100 text-orange-600 px-2 py-1 rounded-full text-xs font-medium">
+                                78점
+                            </div>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-2">서울시 강남구 논현로 789</p>
+                        <div class="text-sm mb-2">
+                            <span class="text-gray-600">가격대: </span>
+                            <span class="font-medium" style="color: #556677;">25,000원 - 35,000원</span>
+                        </div>
+                        <div class="text-xs text-gray-600">분위기 좋음, 약간 높은 가격대</div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-6">
+                    <button class="btn-kakao" onclick="nextStep()">
+                        🗳️ 투표 시작하기
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 6: 투표 -->
+            <div id="step-6" class="fade-in hidden">
+                <h2 class="text-lg font-semibold mb-4" style="color: #556677;">🗳️ 장소 투표</h2>
+                
+                <div class="mb-4 p-3 bg-yellow-50 rounded-lg">
+                    <div class="text-sm text-yellow-800 font-medium">📊 실시간 투표 현황</div>
+                    <div class="text-xs text-yellow-600 mt-1">
+                        참여자들이 선호하는 장소에 투표하고 있습니다
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="card-kakao border-2 border-green-300">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold" style="color: #556677;">🥇 맛있는 한식당</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-medium">3표</span>
+                                <button class="btn-kakao--secondary text-xs px-3 py-1" onclick="vote(this, '한식당')">
+                                    👍 투표
+                                </button>
+                            </div>
+                        </div>
+                        <div class="progress-bar mb-2">
+                            <div class="progress-fill" style="width: 75%;"></div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <span class="tag-kakao--selected text-xs">김철수</span>
+                            <span class="tag-kakao--selected text-xs">이영희</span>
+                            <span class="tag-kakao--selected text-xs">박민수</span>
+                        </div>
+                    </div>
+
+                    <div class="card-kakao">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold" style="color: #556677;">🥈 도쿄 라멘</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-medium">1표</span>
+                                <button class="btn-kakao--secondary text-xs px-3 py-1" onclick="vote(this, '라멘')">
+                                    👍 투표
+                                </button>
+                            </div>
+                        </div>
+                        <div class="progress-bar mb-2">
+                            <div class="progress-fill" style="width: 25%;"></div>
+                        </div>
+                        <div class="flex space-x-1">
+                            <span class="tag-kakao--selected text-xs">최지영</span>
+                        </div>
+                    </div>
+
+                    <div class="card-kakao">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="font-semibold" style="color: #556677;">🥉 이탈리안 키친</h3>
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-medium">0표</span>
+                                <button class="btn-kakao--secondary text-xs px-3 py-1" onclick="vote(this, '이탈리안')">
+                                    👍 투표
+                                </button>
+                            </div>
+                        </div>
+                        <div class="progress-bar mb-2">
+                            <div class="progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-6">
+                    <div class="text-sm text-gray-600 mb-2">투표 참여율: 4/4 (100%)</div>
+                    <button class="btn-kakao" onclick="nextStep()">
+                        ✅ 투표 완료 - 약속 확정
+                    </button>
+                </div>
+            </div>
+
+            <!-- Step 7: 약속 확정 -->
+            <div id="step-7" class="fade-in hidden">
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-start space-x-2">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background-color: #fef01b; color: #556677;">K</div>
+                        <div>
+                            <div class="text-xs mb-1" style="color: #556677;">카밍</div>
+                            <div class="message-bubble message-bubble--other">
+                                🎉 축하해요! 약속이 확정되었습니다!<br>
+                                모든 참여자에게 알림을 보내드렸어요 📱
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-kakao card-kakao--hub mb-4">
+                    <div class="text-center mb-4">
+                        <div class="text-4xl mb-2">🎯</div>
+                        <h3 class="text-xl font-bold" style="color: #556677;">약속이 확정되었습니다!</h3>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">장소</span>
+                            <span class="font-medium" style="color: #556677;">맛있는 한식당</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">날짜</span>
+                            <span class="font-medium" style="color: #556677;">1월 15일 (월)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">시간</span>
+                            <span class="font-medium" style="color: #556677;">오후 7:00</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">주소</span>
+                            <span class="font-medium text-sm" style="color: #556677;">서울시 강남구 강남대로 123</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">참여자</span>
+                            <span class="font-medium" style="color: #556677;">4명</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <button class="btn-kakao--secondary text-sm py-3" onclick="openKakaoMap()">
+                        🗺️ 길찾기
+                    </button>
+                    <button class="btn-kakao--secondary text-sm py-3">
+                        📅 캘린더 추가
+                    </button>
+                </div>
+
+                <div class="card-kakao bg-blue-50">
+                    <h4 class="font-medium mb-2" style="color: #556677;">📱 다음 단계</h4>
+                    <ul class="text-sm text-gray-700 space-y-1">
+                        <li>• T-24h: 출발지 확인 알림</li>
+                        <li>• T-3h: 사전 체크인</li>
+                        <li>• T-1h: 개인별 출발 시간 알림</li>
+                        <li>• 실시간: 교통/날씨 모니터링</li>
+                        <li>• 도착 후: 정산 및 후기</li>
+                    </ul>
+                </div>
+
+                <div class="text-center mt-6 space-y-2">
+                    <button class="btn-kakao w-full" onclick="goToCheckin()">
+                        📅 약속 D-Day 체험
+                    </button>
+                    <button class="btn-kakao--secondary w-full" onclick="restart()">
+                        🔄 처음부터 다시 체험하기
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 7;
+
+        const stepTitles = [
+            "채팅에서 약속 제안",
+            "기본 정보 입력", 
+            "개인 선호도 입력",
+            "선호도 수집 현황",
+            "AI 추천 결과",
+            "장소 투표",
+            "약속 확정"
+        ];
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = 
+                `${currentStep}/${totalSteps} 단계: ${stepTitles[currentStep - 1]}`;
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                document.getElementById(`step-${currentStep}`).classList.add('hidden');
+                currentStep++;
+                document.getElementById(`step-${currentStep}`).classList.remove('hidden');
+                
+                // 배경색 변경 (1, 5, 7단계는 톡 화면, 나머지는 하얀색)
+                const mainContainer = document.getElementById('main-container');
+                const contentArea = document.getElementById('content-area');
+                
+                if (currentStep === 1 || currentStep === 5 || currentStep === 7) {
+                    // 톡 화면 스타일
+                    mainContainer.style.backgroundColor = '#9bbbd4';
+                    contentArea.style.backgroundColor = '#9bbbd4';
+                } else {
+                    // 모임 관리 페이지 스타일 (하얀색)
+                    mainContainer.style.backgroundColor = '#ffffff';
+                    contentArea.style.backgroundColor = '#ffffff';
+                }
+                
+                updateProgress();
+            }
+        }
+
+        function restart() {
+            currentStep = 1;
+            for (let i = 1; i <= totalSteps; i++) {
+                document.getElementById(`step-${i}`).classList.add('hidden');
+            }
+            document.getElementById('step-1').classList.remove('hidden');
+            
+            // 초기 배경색 설정 (1단계는 톡 화면)
+            const mainContainer = document.getElementById('main-container');
+            const contentArea = document.getElementById('content-area');
+            mainContainer.style.backgroundColor = '#9bbbd4';
+            contentArea.style.backgroundColor = '#9bbbd4';
+            
+            updateProgress();
+        }
+
+        function toggleTag(element) {
+            element.classList.toggle('tag-kakao--selected');
+        }
+
+        function selectLocation(element, location) {
+            document.querySelector('#step-3 input').value = location;
+            document.querySelectorAll('#step-3 .tag-kakao--clickable').forEach(el => {
+                el.classList.remove('tag-kakao--selected');
+            });
+            element.classList.add('tag-kakao--selected');
+        }
+
+        function toggleTransport(element) {
+            element.classList.toggle('selected');
+        }
+
+        function vote(button, restaurant) {
+            if (button.textContent.includes('투표')) {
+                button.textContent = '✅ 투표함';
+                button.classList.remove('btn-kakao--secondary');
+                button.classList.add('btn-kakao');
+                
+                // 투표수 증가
+                const voteCount = button.parentElement.querySelector('.font-medium');
+                const currentVotes = parseInt(voteCount.textContent);
+                voteCount.textContent = (currentVotes + 1) + '표';
+                
+                // 진행바 업데이트
+                const progressBar = button.closest('.card-kakao').querySelector('.progress-fill');
+                const newWidth = Math.min(100, (currentVotes + 1) * 25);
+                progressBar.style.width = newWidth + '%';
+                
+                // 투표자 추가
+                const voterTags = button.closest('.card-kakao').querySelector('.flex.space-x-1');
+                const newVoter = document.createElement('span');
+                newVoter.className = 'tag-kakao--selected text-xs';
+                newVoter.textContent = '나';
+                voterTags.appendChild(newVoter);
+            }
+        }
+
+        function goBack() {
+            window.location.href = 'new_final_integrated.html';
+        }
+
+        function goToCheckin() {
+            window.location.href = 'new_checkin.html';
+        }
+
+        function openKakaoMap() {
+            window.open('https://map.kakao.com/', '_blank');
+        }
+
+        // 초기 진행률 설정
+        updateProgress();
+    </script>
+</body>
+</html>
