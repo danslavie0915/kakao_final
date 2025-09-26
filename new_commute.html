@@ -406,6 +406,10 @@
                     class="w-full bg-purple-100 text-purple-800 py-3 px-4 rounded-xl font-medium hover:bg-purple-200 transition-colors">
                     🌆 17:30 - 퇴근 알림
                 </button>
+                <button onclick="simulateTime('23:00', 'wakeup')"
+                    class="w-full bg-indigo-100 text-indigo-800 py-3 px-4 rounded-xl font-medium hover:bg-indigo-200 transition-colors">
+                    🌙 23:00 - 기상 시간 추천
+                </button>
             </div>
             <button onclick="closeTimeSimulator()"
                 class="w-full mt-4 bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-medium hover:bg-gray-300 transition-colors">
@@ -500,7 +504,7 @@
             let messageHTML = `<p class="text-sm ${isSystem ? 'text-blue-800 text-center' : 'text-gray-800'}">${content}</p>`;
 
             if (hasButtons && buttons.length > 0) {
-                messageHTML += '<div class="mt-4 flex flex-col items-center space-y-2">';
+                messageHTML += '<div class="mt-1 flex flex-col items-center space-y-2">';
                 buttons.forEach(button => {
                     let buttonClass = 'button-action';
                     if (button.urgent) buttonClass = 'button-action button-urgent';
@@ -658,6 +662,51 @@
                     🗺️ 경로 안내 시작
                 </button>
             `;
+
+            cardDiv.innerHTML = cardHTML;
+            chatContainer.appendChild(cardDiv);
+            scrollToBottom();
+        }
+
+        // 기상 시간 경로 카드 추가
+        function addWakeupRouteCard(routes) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'route-card p-4 mb-2 max-w-xs';
+
+            let cardHTML = `<h4 class="font-semibold text-gray-800 mb-3">내일의 추천 경로</h4>`;
+
+            routes.forEach((route, index) => {
+                const statusColor = route.status.includes('+') ? 'text-orange-600' : 'text-green-600';
+
+                cardHTML += `
+                    <div class="p-3 ${index > 0 ? 'border-t border-gray-100' : ''} ${route.recommended ? 'bg-yellow-50 rounded-lg' : ''}">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 ${route.color} rounded-full flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">${route.icon}</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800 text-sm">${route.name}</p>
+                                    <p class="text-xs text-gray-600">${route.description}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-gray-800">${route.time}</div>
+                                <div class="text-xs ${statusColor}">${route.status}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="text-xs text-gray-600">
+                                기상 시간: <span class="font-semibold text-blue-600">${route.wakeupTime}</span> | 
+                                요금: <span class="font-semibold">${route.cost}</span>
+                            </div>
+                            <button onclick="${route.action}" class="bg-kakao-yellow text-gray-800 px-3 py-1 rounded-lg text-xs font-medium hover:bg-yellow-500 transition-colors">
+                                선택
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
 
             cardDiv.innerHTML = cardHTML;
             chatContainer.appendChild(cardDiv);
@@ -914,6 +963,8 @@
                     sendWeatherAlert();
                 } else if (type === 'evening') {
                     sendEveningAlert();
+                } else if (type === 'wakeup') {
+                    sendWakeupRecommendation();
                 }
             }, 1000);
         }
@@ -1036,6 +1087,100 @@
                     showFABAfterNotification();
                 }, 1000);
             }, 1500);
+        }
+
+        // 기상 시간 추천 알림
+        function sendWakeupRecommendation() {
+            // 사용자 질문 먼저 표시
+            addMessage('내일 나 몇시에 일어나야 해?', true);
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('🌧️ 내일은 비가 올 것으로 예상됩니다.<br><br>콘치즈님의 출퇴근 패턴을 고려할 때, 비올 때 택시를 타는 것을 선호하며, 출근 시간에 15분 일찍 도착하는 것을 선호합니다.', false, false, [], false);
+
+                    setTimeout(() => {
+                        addMessage('🚗 내일의 추천 경로를 확인해보세요:');
+
+                        setTimeout(() => {
+                            const wakeupRoutes = [
+                                {
+                                    name: '택시',
+                                    description: '집 → 회사 직행',
+                                    time: '25분',
+                                    wakeupTime: '06:20',
+                                    cost: '12,000원',
+                                    status: '비 때문에 +5분',
+                                    color: 'bg-yellow-500',
+                                    icon: '🚕',
+                                    recommended: true,
+                                    action: 'selectTaxiRoute()'
+                                },
+                                {
+                                    name: '대중교통 (2호선)',
+                                    description: '2호선 → 도보 5분',
+                                    time: '50분',
+                                    wakeupTime: '05:50',
+                                    cost: '1,370원',
+                                    status: '비 때문에 +10분',
+                                    color: 'bg-blue-500',
+                                    icon: '2',
+                                    recommended: false,
+                                    action: 'selectPublicTransport()'
+                                }
+                            ];
+                            addWakeupRouteCard(wakeupRoutes);
+                        }, 1000);
+                    }, 2000);
+                }, 2000);
+            }, 1000);
+        }
+
+        // 택시 경로 선택
+        function selectTaxiRoute() {
+            addMessage('택시', true);
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('🚕 택시 이용 시:<br><br>• 소요 시간: 25분<br>• 예상 요금: 12,000원<br>• 비 때문에 평소보다 5분 추가<br><br>⏰ <strong>06:20</strong>에 일어나는 것을 추천드립니다.', false, true, [
+                        { text: '⏰ 알람 맞춰드릴까요?', action: "setWakeupAlarm('06:20')", primary: true }
+                    ]);
+                }, 1500);
+            }, 500);
+        }
+
+        // 대중교통 경로 선택
+        function selectPublicTransport() {
+            addMessage('대중교통 (2호선)', true);
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('🚇 대중교통 이용 시:<br><br>• 소요 시간: 50분<br>• 2호선 → 도보 5분<br>• 비 때문에 평소보다 10분 추가<br><br>⏰ <strong>05:50</strong>에 일어나는 것을 추천드립니다.', false, true, [
+                        { text: '⏰ 알람 맞춰드릴까요?', action: "setWakeupAlarm('05:50')", primary: true }
+                    ]);
+                }, 1500);
+            }, 500);
+        }
+
+        // 기상 알람 설정
+        function setWakeupAlarm(time) {
+            addMessage('알람 맞추기', true);
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage(`✅ ${time} 알람이 설정되었어요!<br><br>🌧️ 내일 비 예보가 있으니 우산도 미리 준비해두세요.<br><br>내일 기상시간에 봬요, 콘치즈님! 😴`, false, false, [], false);
+
+                    // 알림 완료 후 FAB 표시
+                    showFABAfterNotification();
+                }, 1500);
+            }, 500);
         }
 
         // 카카오맵 열기
