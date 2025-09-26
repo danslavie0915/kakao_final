@@ -3,899 +3,822 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>카밍 - 약속 D-Day 관리</title>
+    <title>카밍 - 약속 D-Day</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        'calming': {
-                            'chat-bg': '#9bbbd4',
-                            'other-msg': '#ffffff',
-                            'my-msg': '#fef01b',
-                            'text-gray': '#556677',
-                        }
+                        'kakao-yellow': '#fef01b',
+                        'kakao-bg': '#9bbbd4',
+                        'kakao-text': '#556677',
+                        'kakao-chat-bg': '#b2c7da'
+                    },
+                    fontFamily: {
+                        'kakao': ['Apple SD Gothic Neo', 'Malgun Gothic', 'sans-serif']
                     }
                 }
             }
         }
     </script>
     <style>
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background: linear-gradient(to bottom, #b2c7da, #9bbbd4);
+        }
+
         .message-bubble {
-            border-radius: 12px;
-            padding: 12px 16px;
-            max-width: 70%;
+            max-width: 75%;
             word-wrap: break-word;
-        }
-        .message-bubble--other {
-            background-color: #ffffff;
-            color: #556677;
-            border-bottom-left-radius: 4px;
-        }
-        .message-bubble--mine {
-            background-color: #fef01b;
-            color: #556677;
-            margin-left: auto;
-            border-bottom-right-radius: 4px;
-        }
-        .message-bubble--calming {
-            background-color: #ffffff;
-            color: #556677;
-            border: 2px solid #fef01b;
-            border-bottom-left-radius: 4px;
-        }
-        .btn-calming {
-            background-color: #fef01b;
-            color: #556677;
-            font-weight: 600;
-            padding: 12px 20px;
-            border-radius: 12px;
-            transition: all 0.2s ease-out;
-            border: none;
-            cursor: pointer;
-        }
-        .btn-calming:hover {
-            box-shadow: 0 4px 12px rgba(254, 240, 27, 0.4);
-            transform: scale(0.98);
-        }
-        .btn-calming--secondary {
-            background-color: #ffffff;
-            color: #556677;
-            border: 1px solid #d1d5db;
-        }
-        .btn-calming--danger {
-            background-color: #ef4444;
-            color: #ffffff;
-        }
-        .btn-calming--success {
-            background-color: #10b981;
-            color: #ffffff;
-        }
-        .card-calming {
-            background-color: #ffffff;
-            border-radius: 16px;
-            padding: 16px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-        }
-        .card-calming--urgent {
-            border-left: 4px solid #ef4444;
-            background-color: #fef2f2;
-        }
-        .card-calming--warning {
-            border-left: 4px solid #f59e0b;
-            background-color: #fffbeb;
-        }
-        .card-calming--success {
-            border-left: 4px solid #10b981;
-            background-color: #f0fdf4;
-        }
-        .tag-calming {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px 12px;
-            border-radius: 9999px;
+            animation: slideIn 0.3s ease-out;
             font-size: 14px;
-            background-color: #f3f4f6;
-            color: #556677;
-            margin: 2px;
         }
-        .tag-calming--selected {
-            background-color: #fef01b;
-            color: #556677;
+
+        .message-other {
+            background: white;
+            border-radius: 18px 18px 18px 4px;
         }
-        .tag-calming--urgent {
-            background-color: #fecaca;
-            color: #dc2626;
+
+        .message-user {
+            background: #fef01b;
+            border-radius: 18px 18px 4px 18px;
+            margin-left: auto;
         }
-        .tag-calming--warning {
-            background-color: #fed7aa;
-            color: #ea580c;
-        }
-        .progress-bar {
-            height: 6px;
-            background-color: #e5e7eb;
-            border-radius: 3px;
+
+        .status-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            margin: 8px 0;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        .progress-fill {
-            height: 100%;
-            background-color: #fef01b;
-            transition: width 0.3s ease;
+
+        .location-card {
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #e0e0e0;
+            margin: 4px 0;
+            padding: 12px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
+
+        .review-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e0e0e0;
+            margin: 8px 0;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+
+        .typing-indicator {
+            animation: pulse 1.5s infinite;
         }
-        .pulse {
-            animation: pulse 2s infinite;
+
+        .time-notification {
+            background: white;
+            border-radius: 20px;
+            margin: 12px auto;
+            max-width: 280px;
+            padding: 12px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
         }
+
+        .time-display {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .time-icon {
+            width: 24px;
+            height: 24px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .time-text {
+            color: #556677;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .notification-sound {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fef01b;
+            color: #333;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            animation: notificationPop 0.5s ease-out;
+            z-index: 1000;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
-        .weather-icon {
-            font-size: 2rem;
-            margin: 0 auto;
+
+        @keyframes notificationPop {
+            0% {
+                transform: translateY(-20px) scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
         }
-        .route-comparison {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 16px;
+
+        .button-action {
+            background: #ffffff;
+            color: #556677;
+            border: 1px solid #d1d5db;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin: 8px auto;
+            display: block;
+            cursor: pointer;
+            transition: all 0.2s ease-out;
+            font-size: 14px;
+            font-weight: 600;
+            width: fit-content;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .button-action:hover {
+            background: #f9fafb;
+            transform: scale(0.98);
+        }
+
+        .button-primary {
+            background: #fef01b;
+            color: #556677;
+            border: 1px solid #e6d600;
+            box-shadow: 0 4px 12px rgba(254, 240, 27, 0.4);
+        }
+
+        .button-primary:hover {
+            background: #e6d600;
+            box-shadow: 0 6px 16px rgba(254, 240, 27, 0.5);
+        }
+
+        .button-small {
+            padding: 8px 16px;
+            font-size: 12px;
+            min-width: 80px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #556677;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin: 2px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tag:hover {
+            background: #e5e7eb;
+        }
+
+        .tag-selected {
+            background: #fef01b;
+            color: #556677;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #10b981;
+            transition: width 0.3s ease;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: linear-gradient(135deg, #fef01b 0%, #f9e71e 50%, #f4d03f 100%);
+            border-radius: 30px;
+            display: flex;
             align-items: center;
+            padding: 14px 20px;
+            box-shadow: 0 6px 20px rgba(254, 240, 27, 0.4), 0 2px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            opacity: 0;
+            transform: scale(0);
+            max-width: 220px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .fab.show {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .fab:hover {
+            background: linear-gradient(135deg, #e6d600 0%, #dcc71a 50%, #d4b836 100%);
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(254, 240, 27, 0.5), 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .fab-icon {
+            font-size: 22px;
+            color: #556677;
+            margin-right: 12px;
+            flex-shrink: 0;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+        }
+
+        .fab-text {
+            font-size: 14px;
+            font-weight: 700;
+            color: #556677;
+            white-space: nowrap;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+            letter-spacing: -0.3px;
         }
     </style>
 </head>
-<body style="background-color: #9bbbd4; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;">
-    <div class="min-h-screen flex flex-col max-w-md mx-auto bg-calming-chat-bg">
-        <!-- Header -->
-        <div class="bg-yellow-300 shadow-sm" style="background-color: #fef01b;">
-            <div class="px-4 py-3 flex items-center">
-                <button onclick="goBack()" class="mr-3 text-gray-700">
+
+<body class="min-h-screen">
+    <!-- 알림 사운드 표시 -->
+    <div id="notification-sound" class="notification-sound hidden">
+        🔔 카밍 알림
+    </div>
+
+    <!-- 플로팅 액션 버튼 (FAB) -->
+    <div id="fab" class="fab" onclick="showTimeSimulator()">
+        <span class="fab-icon">⏰</span>
+        <span class="fab-text">다음 시나리오 체험</span>
+    </div>
+
+    <!-- 시간 시뮬레이터 모달 -->
+    <div id="time-simulator" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 w-80">
+            <h3 class="text-lg font-bold text-gray-800 mb-4">약속 D-Day 시나리오</h3>
+            <div class="space-y-3">
+                <button onclick="simulateTime('15:00', 't3h')"
+                    class="w-full bg-blue-100 text-blue-800 py-3 px-4 rounded-xl font-medium hover:bg-blue-200 transition-colors">
+                    🕒 T-3H - 현재 상황 체크
+                </button>
+                <button onclick="simulateTime('17:30', 't30m')"
+                    class="w-full bg-green-100 text-green-800 py-3 px-4 rounded-xl font-medium hover:bg-green-200 transition-colors">
+                    📍 T-30M - 실시간 위치 확인
+                </button>
+                <button onclick="simulateTime('17:45', 'exception')"
+                    class="w-full bg-red-100 text-red-800 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-colors">
+                    🚨 예외 상황 - 지연 발생
+                </button>
+                <button onclick="simulateTime('17:25', 'departure')"
+                    class="w-full bg-orange-100 text-orange-800 py-3 px-4 rounded-xl font-medium hover:bg-orange-200 transition-colors">
+                    🚀 출발 알림
+                </button>
+                <button onclick="simulateTime('20:30', 'review')"
+                    class="w-full bg-purple-100 text-purple-800 py-3 px-4 rounded-xl font-medium hover:bg-purple-200 transition-colors">
+                    ⭐ 후기 작성
+                </button>
+            </div>
+            <button onclick="closeTimeSimulator()"
+                class="w-full mt-4 bg-gray-200 text-gray-700 py-2 px-4 rounded-xl font-medium hover:bg-gray-300 transition-colors">
+                닫기
+            </button>
+        </div>
+    </div>
+
+    <!-- 카카오톡 헤더 -->
+    <div class="bg-kakao-yellow shadow-sm">
+        <div class="max-w-md mx-auto px-4 py-3 flex items-center">
+            <button onclick="goBack()" class="mr-3 text-gray-700">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
+                </svg>
+            </button>
+            <div class="flex items-center space-x-3 flex-1">
+                <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                    <span class="text-white text-lg">🤖</span>
+                </div>
+                <div>
+                    <h1 class="font-semibold text-gray-800">카밍</h1>
+                    <p class="text-xs text-gray-600" id="calming-status">약속 D-Day 관리</p>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="showTimeSimulator()" class="text-gray-700 text-xs bg-white bg-opacity-50 px-2 py-1 rounded">
+                    ⏰ 시간
+                </button>
+                <button class="text-gray-700">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/>
+                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                     </svg>
                 </button>
-                <div class="flex items-center space-x-3 flex-1">
-                    <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
-                        <span class="text-white text-lg">🤖</span>
-                    </div>
-                    <div>
-                        <h1 class="font-semibold text-gray-800">카밍</h1>
-                        <p class="text-xs text-gray-600" id="calming-status">모임 관리 비서</p>
-                    </div>
-                </div>
-                <div class="flex space-x-2">
-                    <button class="text-gray-700">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                        </svg>
-                    </button>
-                </div>
             </div>
         </div>
+    </div>
 
-        <!-- Scenario Navigation -->
-        <div class="bg-white px-4 py-3 border-b border-gray-200">
-            <div class="text-center mb-3">
-                <p class="text-sm font-medium" style="color: #556677;">👇 시나리오를 선택하세요</p>
-            </div>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="showScenario('checkin24')" class="btn-calming text-xs px-3 py-2 font-bold" id="checkin24-btn">
-                    📅 T-24h 체크인
-                </button>
-                <button onclick="showScenario('checkin3')" class="btn-calming--secondary text-xs px-3 py-2 font-bold" id="checkin3-btn">
-                    ⏰ T-3h 체크인
-                </button>
-                <button onclick="showScenario('weather')" class="btn-calming--secondary text-xs px-3 py-2 font-bold" id="weather-btn">
-                    🌧️ 날씨 경고
-                </button>
-                <button onclick="showScenario('departure')" class="btn-calming--secondary text-xs px-3 py-2 font-bold" id="departure-btn">
-                    🚨 출발 알림
-                </button>
-                <button onclick="showScenario('exception')" class="btn-calming--secondary text-xs px-3 py-2 font-bold" id="exception-btn">
-                    🚦 예외 상황
-                </button>
-                <button onclick="showScenario('settlement')" class="btn-calming--secondary text-xs px-3 py-2 font-bold" id="settlement-btn">
-                    💰 정산 & 후기
-                </button>
-            </div>
+    <!-- 채팅 영역 -->
+    <div class="max-w-md mx-auto bg-kakao-chat-bg min-h-screen">
+        <div id="chat-container" class="p-4 space-y-3 pb-20">
+            <!-- 메시지들이 여기에 추가됩니다 -->
         </div>
 
-        <!-- Content Area -->
-        <div class="flex-1 overflow-y-auto p-4" id="content-area">
-            
-            <!-- Scenario 1: T-24h 체크인 -->
-            <div id="scenario-checkin24" class="fade-in">
-                <!-- 약속 정보 카드 -->
-                <div class="card-calming mb-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-semibold" style="color: #556677;">내일 저녁 약속</h3>
-                        <span class="tag-calming--selected text-xs">확정됨</span>
-                    </div>
-                    <div class="text-sm space-y-1" style="color: #6b7280;">
-                        <div>📍 맛있는 한식당</div>
-                        <div>📅 1월 15일 (월) 오후 7:00</div>
-                        <div>👥 김철수, 이영희, 박민수, 최지영</div>
-                    </div>
-                </div>
-
-                <!-- 카밍 메시지 -->
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start space-x-2">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #fef01b; color: #556677;">
-                            🤖
-                        </div>
-                        <div class="flex-1">
-                            <div class="text-xs mb-1" style="color: #556677;">카밍</div>
-                            <div class="message-bubble message-bubble--calming">
-                                안녕하세요! 내일 저녁 약속을 위한 사전 체크인입니다 😊<br><br>
-                                <strong>내 예상 출발지는 어디인가요?</strong><br>
-                                정확한 경로 안내를 위해 확인해주세요!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 출발지 선택 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">📍 출발지 선택</h4>
-                    <div class="space-y-2">
-                        <button class="w-full p-3 text-left rounded-lg border-2 border-yellow-300 bg-yellow-50" onclick="selectDeparture(this, '집')">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xl">🏠</span>
-                                <div>
-                                    <div class="font-medium" style="color: #556677;">집</div>
-                                    <div class="text-sm text-gray-600">서울시 서초구 서초대로 456</div>
-                                </div>
-                                <div class="ml-auto text-yellow-500">✓</div>
-                            </div>
-                        </button>
-                        <button class="w-full p-3 text-left rounded-lg border border-gray-200 hover:border-gray-300" onclick="selectDeparture(this, '회사')">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xl">🏢</span>
-                                <div>
-                                    <div class="font-medium" style="color: #556677;">회사</div>
-                                    <div class="text-sm text-gray-600">서울시 강남구 테헤란로 123</div>
-                                </div>
-                            </div>
-                        </button>
-                        <button class="w-full p-3 text-left rounded-lg border border-gray-200 hover:border-gray-300" onclick="selectDeparture(this, '기타')">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xl">📍</span>
-                                <div>
-                                    <div class="font-medium" style="color: #556677;">기타 위치</div>
-                                    <div class="text-sm text-gray-600">직접 입력하기</div>
-                                </div>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- 예상 경로 정보 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">🗺️ 예상 경로 정보</h4>
-                    <div class="bg-blue-50 p-3 rounded-lg">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm font-medium text-blue-800">집 → 맛있는 한식당</span>
-                            <span class="tag-calming--selected text-xs">추천</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-4 text-sm text-blue-700">
-                            <div class="text-center">
-                                <div class="font-medium">🚇 대중교통</div>
-                                <div class="text-xs">18분 • 1,500원</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="font-medium">🚗 자가용</div>
-                                <div class="text-xs">15분 • 3,000원</div>
-                            </div>
-                            <div class="text-center">
-                                <div class="font-medium">🚕 택시</div>
-                                <div class="text-xs">12분 • 8,000원</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button class="btn-calming mb-2" onclick="confirmCheckin24()">
-                        ✅ 체크인 완료
-                    </button>
-                    <br>
-                    <button class="btn-calming--secondary text-sm" onclick="skipCheckin()">
-                        ⏭️ 나중에 하기
-                    </button>
-                </div>
+        <!-- 입력 영역 -->
+        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t p-3">
+            <div class="flex items-center space-x-2">
+                <button class="text-gray-500">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                    </svg>
+                </button>
+                <input id="message-input" type="text" placeholder="메시지를 입력하세요"
+                    class="flex-1 px-3 py-2 border border-gray-300 rounded-full focus:outline-none focus:border-kakao-yellow"
+                    onkeypress="handleKeyPress(event)">
+                <button onclick="sendMessage()"
+                    class="bg-kakao-yellow text-gray-800 px-4 py-2 rounded-full font-medium hover:bg-yellow-500 transition-colors">
+                    전송
+                </button>
             </div>
-
-            <!-- Scenario 2: T-3h 체크인 -->
-            <div id="scenario-checkin3" class="fade-in hidden">
-                <!-- 긴급 알림 -->
-                <div class="card-calming card-calming--warning mb-4">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <span class="text-xl">⚠️</span>
-                        <h3 class="font-semibold text-orange-800">3시간 후 약속!</h3>
-                    </div>
-                    <p class="text-sm text-orange-700">최종 출발 준비를 확인해주세요</p>
-                </div>
-
-                <!-- 카밍 메시지 -->
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start space-x-2">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #fef01b; color: #556677;">
-                            🤖
-                        </div>
-                        <div class="flex-1">
-                            <div class="text-xs mb-1" style="color: #556677;">카밍</div>
-                            <div class="message-bubble message-bubble--calming">
-                                3시간 후 약속이에요! 🕐<br><br>
-                                <strong>현재 위치와 출발 계획을 확인해주세요</strong><br>
-                                실시간 교통상황을 반영해서 최적의 출발시간을 알려드릴게요!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 현재 상황 체크 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">📍 현재 상황 체크</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">📍</span>
-                                <span class="text-sm">현재 위치</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium" style="color: #556677;">집</div>
-                                <div class="text-xs text-gray-500">예상대로</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">🚇</span>
-                                <span class="text-sm">교통수단</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium" style="color: #556677;">대중교통</div>
-                                <div class="text-xs text-gray-500">변경 가능</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">⏰</span>
-                                <span class="text-sm">권장 출발시간</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium text-green-700">오후 6:25</div>
-                                <div class="text-xs text-green-600">35분 후</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 실시간 업데이트 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">📊 실시간 교통 상황</h4>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm">지하철 2호선</span>
-                            <span class="tag-calming--selected text-xs">정상</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm">강남역 주변</span>
-                            <span class="tag-calming--warning text-xs">약간 혼잡</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm">목적지 주변</span>
-                            <span class="tag-calming--selected text-xs">원활</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button class="btn-calming mb-2" onclick="confirmCheckin3()">
-                        ✅ 최종 확인 완료
-                    </button>
-                    <br>
-                    <button class="btn-calming--secondary text-sm" onclick="changeRoute()">
-                        🔄 경로 변경하기
-                    </button>
-                </div>
-            </div>
-
-            <!-- Scenario 3: 날씨 경고 -->
-            <div id="scenario-weather" class="fade-in hidden">
-                <!-- 긴급 날씨 알림 -->
-                <div class="card-calming card-calming--urgent mb-4">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <span class="text-2xl">🌧️</span>
-                        <h3 class="font-semibold text-red-800">폭우 경보!</h3>
-                    </div>
-                    <p class="text-sm text-red-700">약속 시간대에 강한 비가 예상됩니다</p>
-                </div>
-
-                <!-- 카밍 날씨 알림 -->
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start space-x-2">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #fef01b; color: #556677;">
-                            🤖
-                        </div>
-                        <div class="flex-1">
-                            <div class="text-xs mb-1" style="color: #556677;">카밍 • 날씨 알림</div>
-                            <div class="message-bubble message-bubble--calming">
-                                ⚠️ <strong>날씨 경고</strong><br><br>
-                                오후 6시부터 8시까지 <strong>강한 비</strong>가 예상됩니다.<br>
-                                시간당 20mm 이상의 폭우가 내릴 수 있어요.<br><br>
-                                🌂 우산을 꼭 챙기시고, 교통수단 변경을 고려해보세요!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 날씨 상세 정보 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">🌦️ 시간대별 날씨</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between p-2 bg-yellow-50 rounded">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xl">☁️</span>
-                                <div>
-                                    <div class="text-sm font-medium">오후 5:00 - 6:00</div>
-                                    <div class="text-xs text-gray-600">흐림, 출발 준비 시간</div>
-                                </div>
-                            </div>
-                            <span class="tag-calming--selected text-xs">양호</span>
-                        </div>
-                        <div class="flex items-center justify-between p-2 bg-red-50 rounded">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xl">🌧️</span>
-                                <div>
-                                    <div class="text-sm font-medium">오후 6:00 - 8:00</div>
-                                    <div class="text-xs text-gray-600">폭우, 약속 시간</div>
-                                </div>
-                            </div>
-                            <span class="tag-calming--urgent text-xs">위험</span>
-                        </div>
-                        <div class="flex items-center justify-between p-2 bg-blue-50 rounded">
-                            <div class="flex items-center space-x-3">
-                                <span class="text-xl">🌦️</span>
-                                <div>
-                                    <div class="text-sm font-medium">오후 8:00 - 9:00</div>
-                                    <div class="text-xs text-gray-600">소나기, 귀가 시간</div>
-                                </div>
-                            </div>
-                            <span class="tag-calming text-xs">주의</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 추천 대안 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">💡 카밍의 추천</h4>
-                    <div class="space-y-3">
-                        <div class="p-3 bg-blue-50 rounded-lg">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <span class="text-lg">🚗</span>
-                                <span class="font-medium text-blue-800">자가용/택시 이용</span>
-                            </div>
-                            <p class="text-sm text-blue-700">비를 피할 수 있어 가장 안전합니다</p>
-                        </div>
-                        <div class="p-3 bg-green-50 rounded-lg">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <span class="text-lg">⏰</span>
-                                <span class="font-medium text-green-800">30분 일찍 출발</span>
-                            </div>
-                            <p class="text-sm text-green-700">폭우 시작 전에 도착할 수 있어요</p>
-                        </div>
-                        <div class="p-3 bg-orange-50 rounded-lg">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <span class="text-lg">🏪</span>
-                                <span class="font-medium text-orange-800">실내 장소 변경</span>
-                            </div>
-                            <p class="text-sm text-orange-700">지하상가나 실내 카페로 변경 제안</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button class="btn-calming mb-2" onclick="acceptWeatherAdvice()">
-                        ✅ 추천 수락
-                    </button>
-                    <br>
-                    <button class="btn-calming--secondary text-sm" onclick="ignoreWeather()">
-                        🌂 그대로 진행
-                    </button>
-                </div>
-            </div>
-
-            <!-- Scenario 4: 출발 알림 -->
-            <div id="scenario-departure" class="fade-in hidden">
-                <!-- 긴급 출발 알림 -->
-                <div class="card-calming card-calming--urgent mb-4 pulse">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <span class="text-2xl">🚨</span>
-                        <h3 class="font-semibold text-red-800">지금 출발하세요!</h3>
-                    </div>
-                    <p class="text-sm text-red-700">약속 시간에 맞춰 출발할 시간입니다</p>
-                </div>
-
-                <!-- 카밍 출발 알림 -->
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start space-x-2">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold pulse" style="background-color: #ef4444; color: #ffffff;">
-                            🚨
-                        </div>
-                        <div class="flex-1">
-                            <div class="text-xs mb-1" style="color: #556677;">카밍 • 출발 알림</div>
-                            <div class="message-bubble message-bubble--calming">
-                                🚨 <strong>출발 시간입니다!</strong><br><br>
-                                약속 장소까지 <strong>18분</strong> 소요 예상<br>
-                                오후 7시 약속에 맞춰 <strong>지금 출발</strong>하세요!<br><br>
-                                🚇 2호선 → 강남역 → 도보 3분
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 개인화 브리핑 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">📋 개인화 브리핑</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">🎯</span>
-                                <span class="text-sm">목적지</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium text-blue-700">맛있는 한식당</div>
-                                <div class="text-xs text-blue-600">강남구 강남대로 123</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">⏰</span>
-                                <span class="text-sm">예상 도착</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium text-green-700">오후 6:58</div>
-                                <div class="text-xs text-green-600">2분 여유</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">💰</span>
-                                <span class="text-sm">교통비</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium text-yellow-700">1,500원</div>
-                                <div class="text-xs text-yellow-600">대중교통</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 실시간 경로 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">🗺️ 실시간 경로</h4>
-                    <div class="space-y-2">
-                        <div class="flex items-center space-x-3 p-2 bg-blue-50 rounded">
-                            <span class="text-lg">🚶</span>
-                            <div class="flex-1">
-                                <div class="text-sm font-medium">집 → 서초역</div>
-                                <div class="text-xs text-gray-600">도보 3분</div>
-                            </div>
-                            <span class="text-xs text-blue-600">진행중</span>
-                        </div>
-                        <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded">
-                            <span class="text-lg">🚇</span>
-                            <div class="flex-1">
-                                <div class="text-sm font-medium">2호선 → 강남역</div>
-                                <div class="text-xs text-gray-600">지하철 12분</div>
-                            </div>
-                            <span class="text-xs text-gray-500">대기</span>
-                        </div>
-                        <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded">
-                            <span class="text-lg">🚶</span>
-                            <div class="flex-1">
-                                <div class="text-sm font-medium">강남역 → 목적지</div>
-                                <div class="text-xs text-gray-600">도보 3분</div>
-                            </div>
-                            <span class="text-xs text-gray-500">대기</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button class="btn-calming mb-2" onclick="startNavigation()">
-                        🗺️ 길안내 시작
-                    </button>
-                    <br>
-                    <button class="btn-calming--secondary text-sm" onclick="delayDeparture()">
-                        ⏰ 5분 후 출발
-                    </button>
-                </div>
-            </div>
-
-            <!-- Scenario 5: 예외 상황 -->
-            <div id="scenario-exception" class="fade-in hidden">
-                <!-- 긴급 상황 알림 -->
-                <div class="card-calming card-calming--urgent mb-4">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <span class="text-2xl">🚨</span>
-                        <h3 class="font-semibold text-red-800">교통 지연 발생!</h3>
-                    </div>
-                    <p class="text-sm text-red-700">2호선 신호 장애로 15분 지연 예상</p>
-                </div>
-
-                <!-- 카밍 예외 상황 알림 -->
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start space-x-2">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #ef4444; color: #ffffff;">
-                            🚨
-                        </div>
-                        <div class="flex-1">
-                            <div class="text-xs mb-1" style="color: #556677;">카밍 • 긴급 알림</div>
-                            <div class="message-bubble message-bubble--calming">
-                                🚨 <strong>긴급 상황 발생!</strong><br><br>
-                                2호선에 신호 장애가 발생했어요.<br>
-                                <strong>15분 지연</strong>이 예상됩니다.<br><br>
-                                대안 경로를 추천해드릴게요!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 경로 비교 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">🔄 경로 비교</h4>
-                    <div class="space-y-3">
-                        <div class="p-3 bg-red-50 rounded-lg border border-red-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-red-800">기존 경로 (지연)</span>
-                                <span class="tag-calming--urgent text-xs">15분 지연</span>
-                            </div>
-                            <div class="text-sm text-red-700">2호선 → 강남역 → 도보</div>
-                            <div class="text-lg font-bold text-red-800">33분 → 48분</div>
-                        </div>
-                        <div class="p-3 bg-green-50 rounded-lg border border-green-200">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="text-sm font-medium text-green-800">대안 경로 (추천)</span>
-                                <span class="tag-calming--selected text-xs">정상</span>
-                            </div>
-                            <div class="text-sm text-green-700">3호선 → 신사역 → 버스</div>
-                            <div class="text-lg font-bold text-green-800">35분</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 추가 옵션 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">🚗 기타 옵션</h4>
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between p-2 bg-blue-50 rounded">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">🚕</span>
-                                <span class="text-sm">택시</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium">20분</div>
-                                <div class="text-xs text-gray-600">8,000원</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between p-2 bg-orange-50 rounded">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">📞</span>
-                                <span class="text-sm">약속 시간 변경</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium">30분 연기</div>
-                                <div class="text-xs text-gray-600">참여자 동의 필요</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button class="btn-calming mb-2" onclick="useAlternativeRoute()">
-                        🔄 대안 경로 사용
-                    </button>
-                    <br>
-                    <button class="btn-calming--secondary text-sm" onclick="callTaxi()">
-                        🚕 택시 호출
-                    </button>
-                </div>
-            </div>
-
-            <!-- Scenario 6: 정산 & 후기 -->
-            <div id="scenario-settlement" class="fade-in hidden">
-                <!-- 약속 완료 -->
-                <div class="card-calming card-calming--success mb-4">
-                    <div class="flex items-center space-x-2 mb-2">
-                        <span class="text-2xl">🎉</span>
-                        <h3 class="font-semibold text-green-800">약속 완료!</h3>
-                    </div>
-                    <p class="text-sm text-green-700">즐거운 시간 보내셨나요?</p>
-                </div>
-
-                <!-- 카밍 정산 메시지 -->
-                <div class="space-y-3 mb-6">
-                    <div class="flex items-start space-x-2">
-                        <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold" style="background-color: #fef01b; color: #556677;">
-                            🤖
-                        </div>
-                        <div class="flex-1">
-                            <div class="text-xs mb-1" style="color: #556677;">카밍</div>
-                            <div class="message-bubble message-bubble--calming">
-                                약속이 잘 마무리되었네요! 🎉<br><br>
-                                <strong>정산과 후기</strong>를 도와드릴게요.<br>
-                                다음 약속도 더 완벽하게 준비할 수 있도록!
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 정산 정보 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">💰 정산 정보</h4>
-                    <div class="space-y-3">
-                        <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">🍽️</span>
-                                <span class="text-sm">식사비</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium">120,000원</div>
-                                <div class="text-xs text-gray-600">4명 → 30,000원/인</div>
-                            </div>
-                        </div>
-                        <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                            <div class="flex items-center space-x-2">
-                                <span class="text-lg">🚇</span>
-                                <span class="text-sm">교통비</span>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-sm font-medium">1,500원</div>
-                                <div class="text-xs text-gray-600">개인 부담</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 후기 작성 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">⭐ 장소 후기</h4>
-                    <div class="text-center mb-3">
-                        <div class="text-2xl mb-2">⭐⭐⭐⭐⭐</div>
-                        <p class="text-sm text-gray-600">맛있는 한식당은 어떠셨나요?</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2 justify-center">
-                        <span class="tag-calming--selected text-xs">맛있어요</span>
-                        <span class="tag-calming text-xs">친절해요</span>
-                        <span class="tag-calming text-xs">분위기 좋아요</span>
-                        <span class="tag-calming text-xs">가격 적당해요</span>
-                    </div>
-                </div>
-
-                <!-- 다음 약속 제안 -->
-                <div class="card-calming mb-4">
-                    <h4 class="font-medium mb-3" style="color: #556677;">📅 다음 약속</h4>
-                    <p class="text-sm text-gray-600 mb-3">이 멤버들과 다음 약속은 언제 잡을까요?</p>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button class="btn-calming--secondary text-xs py-2">다음 주</button>
-                        <button class="btn-calming--secondary text-xs py-2">다음 달</button>
-                        <button class="btn-calming--secondary text-xs py-2">특별한 날</button>
-                        <button class="btn-calming--secondary text-xs py-2">나중에</button>
-                    </div>
-                </div>
-
-                <div class="text-center">
-                    <button class="btn-calming mb-2" onclick="completeSettlement()">
-                        ✅ 정산 완료
-                    </button>
-                    <br>
-                    <button class="btn-calming--secondary text-sm" onclick="planNextMeeting()">
-                        📅 다음 약속 잡기
-                    </button>
-                </div>
-            </div>
-
         </div>
     </div>
 
     <script>
-        let currentScenario = 'checkin24';
+        let chatContainer = document.getElementById('chat-container');
+        let messageInput = document.getElementById('message-input');
 
-        function showScenario(scenario) {
-            // 모든 시나리오 숨기기
-            const scenarios = ['checkin24', 'checkin3', 'weather', 'departure', 'exception', 'settlement'];
-            scenarios.forEach(s => {
-                document.getElementById(`scenario-${s}`).classList.add('hidden');
-                document.getElementById(`${s}-btn`).classList.remove('btn-calming');
-                document.getElementById(`${s}-btn`).classList.add('btn-calming--secondary');
+        // 알림 사운드 표시
+        function showNotificationSound() {
+            const soundDiv = document.getElementById('notification-sound');
+            soundDiv.classList.remove('hidden');
+            setTimeout(() => {
+                soundDiv.classList.add('hidden');
+            }, 2000);
+        }
+
+        // FAB 표시/숨김 제어
+        function showFAB() {
+            const fab = document.getElementById('fab');
+            fab.classList.add('show');
+        }
+
+        function hideFAB() {
+            const fab = document.getElementById('fab');
+            fab.classList.remove('show');
+        }
+
+        // 메시지 추가 함수
+        function addMessage(content, isUser = false, hasButtons = false, buttons = [], isSystem = false) {
+            const messageDiv = document.createElement('div');
+            let className = `message-bubble p-3 mb-2`;
+
+            if (isSystem) {
+                className += ' message-system';
+            } else if (isUser) {
+                className += ' message-user ml-auto';
+            } else {
+                className += ' message-other';
+            }
+
+            messageDiv.className = className;
+
+            let messageHTML = `<p class="text-sm ${isSystem ? 'text-blue-800 text-center' : 'text-gray-800'}">${content}</p>`;
+
+            if (hasButtons && buttons.length > 0) {
+                messageHTML += '<div class="mt-3 flex flex-col items-center space-y-2">';
+                buttons.forEach(button => {
+                    let buttonClass = 'button-action';
+                    if (button.primary) buttonClass += ' button-primary';
+                    if (button.small) buttonClass += ' button-small';
+
+                    messageHTML += `<button onclick="${button.action}" class="${buttonClass}">${button.text}</button>`;
+                });
+                messageHTML += '</div>';
+            }
+
+            messageDiv.innerHTML = messageHTML;
+            chatContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // 현재 상황 체크 카드 추가
+        function addStatusCard() {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'status-card p-4 mb-2 max-w-xs';
+
+            cardDiv.innerHTML = `
+                <div class="flex items-center space-x-2 mb-3">
+                    <span class="text-2xl">📍</span>
+                    <h4 class="font-semibold text-gray-800">현재 상황 체크</h4>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg">📍</span>
+                            <span class="text-sm text-gray-700">현재 위치</span>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">집 (예상대로)</span>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-lg">🚇</span>
+                            <span class="text-sm text-gray-700">교통수단</span>
+                        </div>
+                        <span class="text-sm font-medium text-gray-800">대중교통 (변경 가능)</span>
+                    </div>
+                    
+                    <div class="bg-green-50 p-3 rounded-lg border-l-4 border-green-400">
+                        <div class="flex items-center space-x-2 mb-1">
+                            <span class="text-lg">⏰</span>
+                            <span class="text-sm font-semibold text-green-800">권장 출발시간</span>
+                        </div>
+                        <div class="text-lg font-bold text-green-800">오후 6:25</div>
+                        <div class="text-xs text-green-600 mt-1">35분 후</div>
+                    </div>
+                </div>
+            `;
+
+            chatContainer.appendChild(cardDiv);
+            scrollToBottom();
+        }
+
+        // 실시간 위치 카드들 추가
+        function addLocationCards() {
+            const locations = [
+                {
+                    name: '단무지',
+                    avatar: '단',
+                    color: 'bg-orange-400',
+                    location: '강남역 인근',
+                    time: '30분 소요 예정',
+                    status: 'on-time'
+                },
+                {
+                    name: '연어피치',
+                    avatar: '연',
+                    color: 'bg-pink-400',
+                    location: '선릉역 인근',
+                    time: '1시간 소요 예정',
+                    status: 'delayed'
+                },
+                {
+                    name: '콘치즈',
+                    avatar: '콘',
+                    color: 'bg-blue-400',
+                    location: '도착 완료',
+                    time: '스시 젠 대기 중',
+                    status: 'arrived'
+                }
+            ];
+
+            locations.forEach(person => {
+                const cardDiv = document.createElement('div');
+                cardDiv.className = 'location-card';
+
+                const statusColor = person.status === 'arrived' ? 'text-green-600' :
+                                  person.status === 'delayed' ? 'text-red-600' : 'text-blue-600';
+
+                const statusIcon = person.status === 'arrived' ? '✅' :
+                                 person.status === 'delayed' ? '⚠️' : '🚇';
+
+                cardDiv.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-10 h-10 ${person.color} rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                ${person.avatar}
+                            </div>
+                            <div>
+                                <div class="font-medium text-gray-800">${person.name}</div>
+                                <div class="text-sm text-gray-600">${person.location}</div>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="flex items-center space-x-1">
+                                <span class="text-sm">${statusIcon}</span>
+                                <span class="text-sm ${statusColor} font-medium">${person.time}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                chatContainer.appendChild(cardDiv);
             });
+            scrollToBottom();
+        }
 
-            // 선택된 시나리오 보이기
-            document.getElementById(`scenario-${scenario}`).classList.remove('hidden');
-            document.getElementById(`${scenario}-btn`).classList.remove('btn-calming--secondary');
-            document.getElementById(`${scenario}-btn`).classList.add('btn-calming');
+        // 리뷰 태그 카드 추가
+        function addReviewTagCard() {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'review-card p-4 mb-2 max-w-xs';
+
+            cardDiv.innerHTML = `
+                <h4 class="font-semibold text-gray-800 mb-3">🏷️ 리뷰 태그 자동 생성</h4>
+                <p class="text-sm text-gray-600 mb-3">후기를 분석해서 태그를 자동으로 만들었어요!</p>
+                
+                <div class="space-y-2 mb-4">
+                    <div class="text-xs text-gray-500 mb-1">추천 태그:</div>
+                    <div class="flex flex-wrap gap-1">
+                        <span class="tag tag-selected" onclick="toggleTag(this)">#맛집추천</span>
+                        <span class="tag tag-selected" onclick="toggleTag(this)">#조용한분위기</span>
+                        <span class="tag tag-selected" onclick="toggleTag(this)">#대화하기좋은곳</span>
+                        <span class="tag" onclick="toggleTag(this)">#일본여행느낌</span>
+                        <span class="tag" onclick="toggleTag(this)">#전문가솜씨</span>
+                        <span class="tag" onclick="toggleTag(this)">#초밥맛집</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button onclick="confirmReviewTags()" class="button-action button-primary flex-1 button-small">확인</button>
+                    <button onclick="editReviewTags()" class="button-action flex-1 button-small">수정</button>
+                </div>
+            `;
+
+            chatContainer.appendChild(cardDiv);
+            scrollToBottom();
+        }
+
+        // 타이핑 인디케이터
+        function showTyping() {
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'typing-indicator';
+            typingDiv.className = 'message-bubble message-other p-3 mb-2 typing-indicator';
+            typingDiv.innerHTML = '<p class="text-sm text-gray-600">카밍이 입력 중...</p>';
+            chatContainer.appendChild(typingDiv);
+            scrollToBottom();
+        }
+
+        function hideTyping() {
+            const typing = document.getElementById('typing-indicator');
+            if (typing) typing.remove();
+        }
+
+        // 스크롤 하단으로
+        function scrollToBottom() {
+            setTimeout(() => {
+                window.scrollTo(0, document.body.scrollHeight);
+            }, 100);
+        }
+
+        // 키 입력 처리
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+        // 메시지 전송
+        function sendMessage() {
+            const message = messageInput.value.trim();
+            if (!message) return;
+
+            addMessage(message, true);
+            messageInput.value = '';
+        }
+
+        // 시간 시뮬레이터 표시/숨김
+        function showTimeSimulator() {
+            document.getElementById('time-simulator').classList.remove('hidden');
+            hideFAB();
+        }
+
+        function closeTimeSimulator() {
+            document.getElementById('time-simulator').classList.add('hidden');
+        }
+
+        // 시간 알림 카드 추가
+        function addTimeNotification(time) {
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'time-notification';
+
+            timeDiv.innerHTML = `
+                <div class="time-display">
+                    <div class="time-icon">⏰</div>
+                    <div class="time-text">시간: ${time}</div>
+                </div>
+            `;
+
+            chatContainer.appendChild(timeDiv);
+            scrollToBottom();
+        }
+
+        // 시간별 시나리오 시뮬레이션
+        function simulateTime(time, type) {
+            closeTimeSimulator();
+            showNotificationSound();
+
+            addTimeNotification(time);
+
+            setTimeout(() => {
+                if (type === 't3h') {
+                    sendT3HAlert();
+                } else if (type === 't30m') {
+                    sendT30MAlert();
+                } else if (type === 'exception') {
+                    sendExceptionAlert();
+                } else if (type === 'departure') {
+                    sendDepartureAlert();
+                } else if (type === 'review') {
+                    sendReviewRequest();
+                }
+            }, 1000);
+        }
+
+        // T-3H 알림
+        function sendT3HAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🕒 <strong>T-3H 현재 상황 체크</strong><br><br>약속 3시간 전이에요! 현재 교통 상황을 확인해드릴게요.');
+
+                setTimeout(() => {
+                    addStatusCard();
+                    
+                    setTimeout(() => {
+                        showTyping();
+                        setTimeout(() => {
+                            hideTyping();
+                            addMessage('콘치즈님의 최근 패턴을 참고해볼 때 2호선이 덜 혼잡할 것 같아요. 현재 사람 많은 신분당선보다는 2호선 타기를 추천드립니다.<br><br>권장 출발 시간은 <strong>오후 6:25</strong>입니다.');
+                            
+                            setTimeout(() => {
+                                showFAB();
+                            }, 2000);
+                        }, 2000);
+                    }, 1000);
+                }, 1000);
+            }, 2000);
+        }
+
+        // T-30M 알림
+        function sendT30MAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('📍 <strong>T-30M 실시간 위치 확인</strong><br><br>카카오맵을 열어, 친구들의 실시간 위치를 확인해보세요!', false, true, [
+                    { text: '🗺️ 카카오맵 열기', action: 'openKakaoMap()', primary: false, small: true }
+                ]);
+
+                setTimeout(() => {
+                    addLocationCards();
+                    
+                    setTimeout(() => {
+                        showFAB();
+                    }, 2000);
+                }, 1000);
+            }, 2000);
+        }
+
+        // 예외 상황 알림
+        function sendExceptionAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🚨 <strong>예외 상황 발생!</strong><br><br>2호선에 지연이 발생했어요. 대안 경로를 추천해드릴게요!', false, true, [
+                    { text: '🚇 대안 경로 보기', action: 'showAlternativeRoute()', primary: false, small: true },
+                    { text: '🚕 택시 호출', action: 'callTaxi()', primary: true, small: true }
+                ]);
+
+                setTimeout(() => {
+                    showFAB();
+                }, 2000);
+            }, 2000);
+        }
+
+        // 출발 알림
+        function sendDepartureAlert() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🚀 <strong>출발 시간입니다!</strong><br><br>지금 바로 출발하세요! 친구들이 기다리고 있어요 😊', false, true, [
+                    { text: '🗺️ 길찾기 시작', action: 'startNavigation()', primary: true, small: true }
+                ]);
+
+                setTimeout(() => {
+                    showFAB();
+                }, 2000);
+            }, 1500);
+        }
+
+        // 후기 요청
+        function sendReviewRequest() {
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('단무지님이 추천한 초밥집, 다들 만족하셨나요? "조용한 곳"이라 대화하기 좋으셨는지 궁금해요!');
+
+                // 사용자 응답 시뮬레이션
+                setTimeout(() => {
+                    addMessage('조용하고 좋았어. 그리고 초밥에 밥알 갯수가 정확히 320개였어. 전문가 솜씨라서 아주 마음에 들었어. 분위기도 정말 좋았어 일본 여행 온거 같았어.', true);
+
+                    setTimeout(() => {
+                        showTyping();
+                        setTimeout(() => {
+                            hideTyping();
+                            addMessage('감사합니다! 후기를 분석해서 태그로 자동 변환하여 카카오맵 리뷰에 반영해드릴게요 🏷️');
+
+                            setTimeout(() => {
+                                addReviewTagCard();
+                                
+                                setTimeout(() => {
+                                    showFAB();
+                                }, 2000);
+                            }, 1000);
+                        }, 2000);
+                    }, 1000);
+                }, 2000);
+            }, 2000);
+        }
+
+        // 태그 토글
+        function toggleTag(element) {
+            element.classList.toggle('tag-selected');
+        }
+
+        // 리뷰 태그 확인
+        function confirmReviewTags() {
+            addMessage('확인', true);
             
-            currentScenario = scenario;
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+                    addMessage('✅ 카카오맵 리뷰가 등록되었어요!<br><br>선택하신 태그들이 반영되어 다른 사용자들에게 도움이 될 거예요 😊');
+                    
+                    setTimeout(() => {
+                        showFAB();
+                    }, 2000);
+                }, 1500);
+            }, 500);
         }
 
-        function goBack() {
-            window.location.href = 'new_appointment.html';
+        // 리뷰 태그 수정
+        function editReviewTags() {
+            addMessage('수정', true);
+            addMessage('태그를 직접 선택해서 수정해보세요! 클릭하면 선택/해제됩니다.');
         }
 
-        // 시나리오별 함수들
-        function selectDeparture(element, location) {
-            // 모든 버튼 초기화
-            document.querySelectorAll('#scenario-checkin24 button').forEach(btn => {
-                btn.classList.remove('border-yellow-300', 'bg-yellow-50');
-                btn.classList.add('border-gray-200');
-                btn.querySelector('.ml-auto')?.remove();
-            });
-            
-            // 선택된 버튼 활성화
-            element.classList.remove('border-gray-200');
-            element.classList.add('border-yellow-300', 'bg-yellow-50');
-            
-            // 체크 마크 추가
-            const checkMark = document.createElement('div');
-            checkMark.className = 'ml-auto text-yellow-500';
-            checkMark.textContent = '✓';
-            element.appendChild(checkMark);
-        }
-
-        function confirmCheckin24() {
-            alert('✅ T-24h 체크인이 완료되었습니다!');
-        }
-
-        function skipCheckin() {
-            alert('⏭️ 나중에 체크인하겠습니다.');
-        }
-
-        function confirmCheckin3() {
-            alert('✅ T-3h 최종 체크인이 완료되었습니다!');
-        }
-
-        function changeRoute() {
-            alert('🔄 경로 변경 옵션을 확인합니다.');
-        }
-
-        function acceptWeatherAdvice() {
-            alert('✅ 날씨 추천을 수락했습니다.');
-        }
-
-        function ignoreWeather() {
-            alert('🌂 기존 계획대로 진행합니다.');
-        }
-
-        function startNavigation() {
-            window.open('https://map.kakao.com/', '_blank');
-        }
-
-        function delayDeparture() {
-            alert('⏰ 5분 후 다시 알림을 보내드릴게요.');
-        }
-
-        function useAlternativeRoute() {
-            alert('🔄 대안 경로로 안내를 시작합니다.');
+        // 기타 함수들
+        function showAlternativeRoute() {
+            addMessage('대안 경로 보기', true);
+            addMessage('🚇 3호선 환승 경로: 35분<br>🚌 버스 740번: 40분<br>🚕 택시: 25분 (12,000원)');
         }
 
         function callTaxi() {
-            alert('🚕 택시를 호출합니다.');
+            addMessage('택시 호출', true);
+            addMessage('🚕 택시가 호출되었어요! 5분 후 도착 예정입니다.');
         }
 
-        function completeSettlement() {
-            alert('✅ 정산이 완료되었습니다!');
+        function startNavigation() {
+            addMessage('길찾기 시작', true);
+            openKakaoMap();
         }
 
-        function planNextMeeting() {
-            alert('📅 다음 약속을 계획합니다.');
+        function openKakaoMap() {
+            window.open('https://map.kakao.com/', '_blank');
         }
+
+        function goBack() {
+            window.location.href = 'new_appointment_improved.html';
+        }
+
+        // 초기 메시지
+        setTimeout(() => {
+            addMessage('안녕하세요! 오늘은 약속 D-Day예요! 🎉<br><br>상단의 ⏰ 시간 버튼을 눌러서 다양한 시간대의 알림을 체험해보세요!', false, true, [
+                { text: '⏰ 시나리오 체험하기', action: 'showTimeSimulator()', primary: true }
+            ]);
+        }, 1000);
     </script>
 </body>
 </html>
