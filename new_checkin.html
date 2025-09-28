@@ -310,13 +310,13 @@
                     class="w-full bg-green-100 text-green-800 py-3 px-4 rounded-xl font-medium hover:bg-green-200 transition-colors">
                     📍 T-30M - 실시간 위치 확인
                 </button>
-                <button onclick="simulateTime('17:45', 'exception')"
-                    class="w-full bg-red-100 text-red-800 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-colors">
-                    🚨 예외 상황 - 지연 발생
-                </button>
                 <button onclick="simulateTime('17:25', 'departure')"
                     class="w-full bg-orange-100 text-orange-800 py-3 px-4 rounded-xl font-medium hover:bg-orange-200 transition-colors">
                     🚀 출발 알림
+                </button>
+                <button onclick="simulateTime('17:45', 'exception')"
+                    class="w-full bg-red-100 text-red-800 py-3 px-4 rounded-xl font-medium hover:bg-red-200 transition-colors">
+                    🚨 예외 상황 - 지연 발생
                 </button>
                 <button onclick="simulateTime('20:30', 'review')"
                     class="w-full bg-purple-100 text-purple-800 py-3 px-4 rounded-xl font-medium hover:bg-purple-200 transition-colors">
@@ -554,6 +554,51 @@
             scrollToBottom();
         }
 
+        // 대안 경로 카드 추가 (지연 발생 시)
+        function addAlternativeRouteCard(routes) {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = 'status-card p-4 mb-2 max-w-xs';
+
+            let cardHTML = `<h4 class="font-semibold text-gray-800 mb-3">🔄 대안 경로</h4>`;
+
+            routes.forEach((route, index) => {
+                const statusColor = route.status === '원활' ? 'text-green-600' :
+                    route.status === '지연' ? 'text-red-600' : 'text-orange-600';
+
+                cardHTML += `
+                    <div class="p-3 ${index > 0 ? 'border-t border-gray-100' : ''} ${route.recommended ? 'bg-yellow-50 rounded-lg' : ''}">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 ${route.color} rounded-full flex items-center justify-center">
+                                    <span class="text-white text-xs font-bold">${route.icon}</span>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-800 text-sm">${route.name}</p>
+                                    <p class="text-xs text-gray-600">${route.description}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm font-semibold text-gray-800">${route.time}</div>
+                                <div class="text-xs ${statusColor}">${route.status}</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div class="text-xs text-gray-600">
+                                요금: <span class="font-semibold">${route.cost}</span>
+                            </div>
+                            <button onclick="${route.action}" class="bg-kakao-yellow text-gray-800 px-3 py-1 rounded-lg text-xs font-medium hover:bg-yellow-500 transition-colors">
+                                선택
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            cardDiv.innerHTML = cardHTML;
+            chatContainer.appendChild(cardDiv);
+            scrollToBottom();
+        }
+
         // 리뷰 태그 카드 추가
         function addReviewTagCard() {
             const cardDiv = document.createElement('div');
@@ -720,13 +765,49 @@
             showTyping();
             setTimeout(() => {
                 hideTyping();
-                addMessage('🚨 <strong>예외 상황 발생!</strong><br><br>2호선에 지연이 발생했어요. 대안 경로를 추천해드릴게요!', false, true, [
-                    { text: '🚇 대안 경로 보기', action: 'showAlternativeRoute()', primary: false, small: true },
-                    { text: '🚕 택시 호출', action: 'callTaxi()', primary: true, small: true }
-                ]);
+                addMessage('🚨 <strong>예외 상황 발생!</strong><br><br>2호선에 지연이 발생했어요. 약속 장소까지 늦을 수 있습니다.<br><br>대안 경로를 추천해드릴게요!', false, false, [], false);
 
                 setTimeout(() => {
-                    showFAB();
+                    addMessage('🔄 대안 경로를 확인해보세요:');
+
+                    setTimeout(() => {
+                        const alternativeRoutes = [
+                            {
+                                name: '3호선 환승',
+                                description: '3호선 → 2호선 환승',
+                                time: '30분',
+                                cost: '1,370원',
+                                status: '원활',
+                                color: 'bg-orange-500',
+                                icon: '3',
+                                recommended: true,
+                                action: "selectAlternativeRoute('3호선 환승')"
+                            },
+                            {
+                                name: '버스 740번',
+                                description: '집 → 약속장소 직행',
+                                time: '35분',
+                                cost: '1,200원',
+                                status: '약간 혼잡',
+                                color: 'bg-green-500',
+                                icon: '🚌',
+                                recommended: false,
+                                action: "selectAlternativeRoute('버스 740번')"
+                            },
+                            {
+                                name: '택시',
+                                description: '집 → 약속장소 직행',
+                                time: '20분',
+                                cost: '10,000원',
+                                status: '원활',
+                                color: 'bg-yellow-500',
+                                icon: '🚕',
+                                recommended: false,
+                                action: "selectAlternativeRoute('택시')"
+                            }
+                        ];
+                        addAlternativeRouteCard(alternativeRoutes);
+                    }, 1000);
                 }, 2000);
             }, 2000);
         }
@@ -802,6 +883,48 @@
         function editReviewTags() {
             addMessage('수정', true);
             addMessage('태그를 직접 선택해서 수정해보세요! 클릭하면 선택/해제됩니다.');
+        }
+
+        // 대안 경로 선택
+        function selectAlternativeRoute(routeName) {
+            addMessage(routeName, true);
+
+            setTimeout(() => {
+                showTyping();
+                setTimeout(() => {
+                    hideTyping();
+
+                    if (routeName === '3호선 환승') {
+                        addMessage('🚇 3호선 환승 경로:<br><br>• 소요 시간: 30분<br>• 3호선 → 2호선 환승<br>• 요금: 1,370원<br><br>✅ 경로 안내를 시작합니다!', false, true, [
+                            { text: '🗺️ 카카오맵에서 보기', action: 'openKakaoMap()', primary: true, small: true }
+                        ]);
+                    } else if (routeName === '버스 740번') {
+                        addMessage('🚌 버스 740번 경로:<br><br>• 소요 시간: 35분<br>• 집 → 약속장소 직행<br>• 요금: 1,200원<br><br>✅ 경로 안내를 시작합니다!', false, true, [
+                            { text: '🗺️ 카카오맵에서 보기', action: 'openKakaoMap()', primary: true, small: true }
+                        ]);
+                    } else if (routeName === '택시') {
+                        addMessage('🚕 택시 이용:<br><br>• 소요 시간: 20분<br>• 집 → 약속장소 직행<br>• 예상 요금: 10,000원<br><br>✅ 택시 호출을 도와드릴까요?', false, true, [
+                            { text: '🚕 카카오T 호출', action: 'callKakaoTaxi()', primary: true, small: true },
+                            { text: '🗺️ 카카오맵에서 보기', action: 'openKakaoMap()', primary: false, small: true }
+                        ]);
+                    }
+
+                    // 알림 완료 후 FAB 표시
+                    setTimeout(() => {
+                        showFAB();
+                    }, 2000);
+                }, 1500);
+            }, 500);
+        }
+
+        // 카카오T 호출
+        function callKakaoTaxi() {
+            addMessage('카카오T 호출', true);
+            showTyping();
+            setTimeout(() => {
+                hideTyping();
+                addMessage('🚕 카카오T 앱으로 연결합니다!<br><br>택시 호출이 완료되면 실시간으로 위치를 알려드릴게요.');
+            }, 1000);
         }
 
         // 기타 함수들
