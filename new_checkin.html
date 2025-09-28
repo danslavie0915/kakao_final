@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -129,6 +130,7 @@
                 opacity: 0;
                 transform: translateY(10px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -136,8 +138,15 @@
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
         }
 
         @keyframes notificationPop {
@@ -145,6 +154,7 @@
                 transform: translateY(-20px) scale(0.8);
                 opacity: 0;
             }
+
             100% {
                 transform: translateY(0) scale(1);
                 opacity: 1;
@@ -288,7 +298,8 @@
 
     <!-- 시간 시뮬레이터 모달 -->
     <div id="time-simulator" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 w-80">
+        <div
+            class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white rounded-2xl p-6 w-80">
             <h3 class="text-lg font-bold text-gray-800 mb-4">약속 D-Day 시나리오</h3>
             <div class="space-y-3">
                 <button onclick="simulateTime('15:00', 't3h')"
@@ -328,7 +339,8 @@
                 </svg>
             </button>
             <div class="flex items-center space-x-3 flex-1">
-                <div class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-pink-400 to-purple-500 rounded-full flex items-center justify-center">
                     <span class="text-white text-lg">🤖</span>
                 </div>
                 <div>
@@ -337,12 +349,14 @@
                 </div>
             </div>
             <div class="flex space-x-2">
-                <button onclick="showTimeSimulator()" class="text-gray-700 text-xs bg-white bg-opacity-50 px-2 py-1 rounded">
+                <button onclick="showTimeSimulator()"
+                    class="text-gray-700 text-xs bg-white bg-opacity-50 px-2 py-1 rounded">
                     ⏰ 시간
                 </button>
                 <button class="text-gray-700">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
+                        <path
+                            d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" />
                     </svg>
                 </button>
             </div>
@@ -360,7 +374,8 @@
             <div class="flex items-center space-x-2">
                 <button class="text-gray-500">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        <path
+                            d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
                     </svg>
                 </button>
                 <input id="message-input" type="text" placeholder="메시지를 입력하세요"
@@ -509,10 +524,10 @@
                 cardDiv.className = 'location-card';
 
                 const statusColor = person.status === 'arrived' ? 'text-green-600' :
-                                  person.status === 'delayed' ? 'text-red-600' : 'text-blue-600';
+                    person.status === 'delayed' ? 'text-red-600' : 'text-blue-600';
 
                 const statusIcon = person.status === 'arrived' ? '✅' :
-                                 person.status === 'delayed' ? '⚠️' : '🚇';
+                    person.status === 'delayed' ? '⚠️' : '🚇';
 
                 cardDiv.innerHTML = `
                     <div class="flex items-center justify-between">
@@ -665,13 +680,13 @@
 
                 setTimeout(() => {
                     addStatusCard();
-                    
+
                     setTimeout(() => {
                         showTyping();
                         setTimeout(() => {
                             hideTyping();
                             addMessage('콘치즈님의 최근 패턴을 참고해볼 때 2호선이 덜 혼잡할 것 같아요. 현재 사람 많은 신분당선보다는 2호선 타기를 추천드립니다.<br><br>권장 출발 시간은 <strong>오후 6:25</strong>입니다.');
-                            
+
                             setTimeout(() => {
                                 showFAB();
                             }, 2000);
@@ -692,7 +707,7 @@
 
                 setTimeout(() => {
                     addLocationCards();
-                    
+
                     setTimeout(() => {
                         showFAB();
                     }, 2000);
@@ -750,7 +765,7 @@
 
                             setTimeout(() => {
                                 addReviewTagCard();
-                                
+
                                 setTimeout(() => {
                                     showFAB();
                                 }, 2000);
@@ -769,13 +784,13 @@
         // 리뷰 태그 확인
         function confirmReviewTags() {
             addMessage('확인', true);
-            
+
             setTimeout(() => {
                 showTyping();
                 setTimeout(() => {
                     hideTyping();
                     addMessage('✅ 카카오맵 리뷰가 등록되었어요!<br><br>선택하신 태그들이 반영되어 다른 사용자들에게 도움이 될 거예요 😊');
-                    
+
                     setTimeout(() => {
                         showFAB();
                     }, 2000);
@@ -810,7 +825,7 @@
         }
 
         function goBack() {
-            window.location.href = 'new_appointment_improved.html';
+            window.location.href = 'index.html';
         }
 
         // 초기 메시지
@@ -821,4 +836,5 @@
         }, 1000);
     </script>
 </body>
+
 </html>
