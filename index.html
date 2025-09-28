@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -118,6 +119,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -125,12 +127,19 @@
         }
 
         @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
                 transform: translateY(0);
             }
+
             40% {
                 transform: translateY(-10px);
             }
+
             60% {
                 transform: translateY(-5px);
             }
@@ -156,31 +165,32 @@
         }
     </style>
 </head>
+
 <body>
     <div class="hero-container">
         <div class="main-card">
             <div class="logo">
                 🤖
             </div>
-            
+
             <h1 class="title">카밍(Ka-ming)</h1>
             <p class="subtitle">
                 당신의 하루를 관리하는<br>
                 스마트 출퇴근·모임 비서
             </p>
-            
+
             <div class="space-y-3">
                 <button class="feature-button commute-button" onclick="goToCommute()">
                     <span class="feature-icon">🚇</span>
                     스마트 출퇴근
                 </button>
-                
+
                 <button class="feature-button meeting-button" onclick="goToMeeting()">
                     <span class="feature-icon">👥</span>
                     스마트 모임 비서
                 </button>
             </div>
-            
+
             <div class="mt-6 text-xs text-gray-500">
                 각 버튼을 클릭해서 체험해보세요
             </div>
@@ -209,11 +219,11 @@
         }
 
         // 페이지 로드 시 애니메이션
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const card = document.querySelector('.main-card');
             card.style.opacity = '0';
             card.style.transform = 'translateY(30px)';
-            
+
             setTimeout(() => {
                 card.style.transition = 'all 0.8s ease-out';
                 card.style.opacity = '1';
@@ -222,4 +232,5 @@
         });
     </script>
 </body>
+
 </html>
